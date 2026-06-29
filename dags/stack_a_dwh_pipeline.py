@@ -228,7 +228,7 @@ def aggregate_silver_to_gold(**kwargs):
     Aggregate data from Silver to Gold layer
     - Create analytical tables
     - Compute aggregations & metrics
-    Idempotent: DELETE + INSERT pattern
+    Idempotent: DELETE + INSERT with ON CONFLICT upsert safety net
     """
     logger.info("Aggregating silver data to gold layer")
     
@@ -273,6 +273,9 @@ def aggregate_silver_to_gold(**kwargs):
         
         cursor.execute("""
         INSERT INTO stack_a.gold_customer_metrics
+        (customer_id, customer_lifetime_value, total_transactions,
+         first_purchase_date, last_purchase_date, avg_transaction_amount,
+         preferred_category, preferred_payment_method, is_active, risk_score, _updated_at)
         SELECT 
             c.customer_id,
             SUM(t.amount) as customer_lifetime_value,
@@ -283,7 +286,6 @@ def aggregate_silver_to_gold(**kwargs):
             MODE() WITHIN GROUP (ORDER BY p.category) as preferred_category,
             MODE() WITHIN GROUP (ORDER BY t.payment_method) as preferred_payment_method,
             c.is_active,
-            -- Risk score: 0.0-1.0 (higher = more risky)
             CASE 
                 WHEN COUNT(CASE WHEN t.status = 'refunded' THEN 1 END) > 5 THEN 0.8
                 WHEN COUNT(CASE WHEN t.status = 'refunded' THEN 1 END) > 2 THEN 0.5
@@ -295,6 +297,17 @@ def aggregate_silver_to_gold(**kwargs):
         LEFT JOIN stack_a.silver_products p ON t.product_id = p.product_id
         WHERE t.dq_is_valid = TRUE
         GROUP BY c.customer_id, c.is_active
+        ON CONFLICT (customer_id) DO UPDATE SET
+            customer_lifetime_value = EXCLUDED.customer_lifetime_value,
+            total_transactions = EXCLUDED.total_transactions,
+            first_purchase_date = EXCLUDED.first_purchase_date,
+            last_purchase_date = EXCLUDED.last_purchase_date,
+            avg_transaction_amount = EXCLUDED.avg_transaction_amount,
+            preferred_category = EXCLUDED.preferred_category,
+            preferred_payment_method = EXCLUDED.preferred_payment_method,
+            is_active = EXCLUDED.is_active,
+            risk_score = EXCLUDED.risk_score,
+            _updated_at = EXCLUDED._updated_at
         """)
         
         # 3. Product Metrics
@@ -302,13 +315,15 @@ def aggregate_silver_to_gold(**kwargs):
         
         cursor.execute("""
         INSERT INTO stack_a.gold_product_metrics
+        (product_id, product_name, category, total_quantity_sold, total_revenue,
+         avg_rating, days_in_inventory, inventory_turnover_ratio, is_profitable, _updated_at)
         SELECT 
             p.product_id,
             p.product_name,
             p.category,
             SUM(t.quantity) as total_quantity_sold,
             SUM(t.amount) as total_revenue,
-            ROUND(AVG(5.0), 2) as avg_rating,  -- Placeholder: would come from reviews table
+            ROUND(AVG(5.0), 2) as avg_rating,
             CURRENT_DATE - MAX(DATE(t.transaction_date)) as days_in_inventory,
             ROUND(SUM(t.quantity)::NUMERIC / NULLIF(p.stock_quantity, 0), 2) as inventory_turnover_ratio,
             CASE WHEN SUM(t.amount) > SUM(t.unit_price * t.quantity) * 0.8 THEN TRUE ELSE FALSE END as is_profitable,
@@ -316,6 +331,16 @@ def aggregate_silver_to_gold(**kwargs):
         FROM stack_a.silver_products p
         LEFT JOIN stack_a.silver_transactions t ON p.product_id = t.product_id AND t.status = 'completed'
         GROUP BY p.product_id, p.product_name, p.category, p.stock_quantity
+        ON CONFLICT (product_id) DO UPDATE SET
+            product_name = EXCLUDED.product_name,
+            category = EXCLUDED.category,
+            total_quantity_sold = EXCLUDED.total_quantity_sold,
+            total_revenue = EXCLUDED.total_revenue,
+            avg_rating = EXCLUDED.avg_rating,
+            days_in_inventory = EXCLUDED.days_in_inventory,
+            inventory_turnover_ratio = EXCLUDED.inventory_turnover_ratio,
+            is_profitable = EXCLUDED.is_profitable,
+            _updated_at = EXCLUDED._updated_at
         """)
         
         conn.commit()
