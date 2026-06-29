@@ -246,9 +246,11 @@ def aggregate_silver_to_gold(**kwargs):
         
         cursor.execute("""
         INSERT INTO stack_a.gold_daily_sales_fact
+        (transaction_date, customer_id, product_id, category, store_location,
+         quantity, gross_amount, net_amount, transaction_count,
+         completed_count, refunded_count, _updated_at)
         SELECT 
-            DEFAULT,
-            DATE(t.transaction_date) as transaction_date,
+            DATE(t.transaction_date),
             t.customer_id,
             t.product_id,
             p.category,
