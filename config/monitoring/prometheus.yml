@@ -25,4 +25,4 @@ scrape_configs:
 
   - job_name: "spark-worker"
     static_configs:
-      - targets: ["spark-worker-1:9405"]
+      - targets: ["spark-worker-1:9404"]
