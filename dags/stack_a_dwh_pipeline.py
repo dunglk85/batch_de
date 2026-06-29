@@ -530,7 +530,7 @@ with dag:
     # 5. Great Expectations: Data quality validation
     run_ge_validation = BashOperator(
         task_id='run_data_quality_checks',
-        bash_command="python /home/airflow/scripts/run_ge_validation.py",
+        bash_command="cd /home/airflow && python scripts/run_ge_validation.py",
     )
     
     # 6. Publish metrics
