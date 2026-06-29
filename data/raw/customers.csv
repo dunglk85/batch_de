@@ -1,0 +1,101 @@
+customer_id,first_name,last_name,email,phone,city,state,zip_code,created_date,is_active
+CUST_000001,William,Johnson,william.johnson0@gmail.com,+16413283286,Los Angeles,TX,21395,2025-08-01,False
+CUST_000002,John,Smith,john.smith1@gmail.com,+15396171434,Dallas,TX,95181,2025-08-24,False
+CUST_000003,Emily,Davis,emily.davis2@mail.com,+16108773615,San Antonio,PA,46421,2026-03-12,True
+CUST_000004,Richard,Garcia,richard.garcia3@gmail.com,+13581996881,Philadelphia,CA,44671,2026-05-08,False
+CUST_000005,James,Johnson,james.johnson4@company.com,+13804006925,San Jose,TX,19116,2026-05-07,True
+CUST_000006,Richard,Jones,richard.jones5@gmail.com,+15224895554,San Diego,PA,31319,2025-11-22,True
+CUST_000007,Emily,Hernandez,emily.hernandez6@outlook.com,+13877503803,Dallas,TX,31417,2025-10-06,False
+CUST_000008,David,Anderson,david.anderson7@mail.com,+15974321916,Houston,NY,51347,2025-11-06,True
+CUST_000009,Jane,Brown,jane.brown8@mail.com,+17377719179,San Antonio,CA,28726,2026-01-15,True
+CUST_000010,Emily,Lopez,emily.lopez9@mail.com,+16845387543,Philadelphia,TX,28131,2025-09-12,False
+CUST_000011,Jane,Gonzalez,jane.gonzalez10@gmail.com,+13297423621,San Antonio,CA,18326,2025-11-14,False
+CUST_000012,Maria,Davis,maria.davis11@mail.com,+16809811188,Los Angeles,TX,44973,2025-07-06,True
+CUST_000013,Jane,Jones,jane.jones12@company.com,+14681035315,Dallas,IL,76542,2026-04-06,True
+CUST_000014,Barbara,Hernandez,barbara.hernandez13@mail.com,+15294823646,Dallas,TX,10074,2025-07-28,True
+CUST_000015,Jessica,Smith,jessica.smith14@gmail.com,+17493451949,Houston,CA,20322,2026-04-17,False
+CUST_000016,Barbara,Johnson,barbara.johnson15@mail.com,+14267758787,Dallas,IL,44741,2025-09-02,False
+CUST_000017,Emily,Anderson,emily.anderson16@mail.com,+15495087118,San Diego,TX,69177,2026-03-30,True
+CUST_000018,Emily,Johnson,emily.johnson17@outlook.com,+12856674770,San Jose,TX,10942,2026-04-24,True
+CUST_000019,Emily,Johnson,emily.johnson18@gmail.com,+17196264899,Phoenix,CA,38080,2025-08-27,True
+CUST_000020,Linda,Anderson,linda.anderson19@mail.com,+19419038749,San Antonio,TX,22363,2026-04-11,False
+CUST_000021,Sarah,Miller,sarah.miller20@company.com,+19167892612,New York,TX,54473,2026-04-05,True
+CUST_000022,Emily,Brown,emily.brown21@mail.com,+19275324006,Phoenix,CA,42742,2026-04-22,False
+CUST_000023,Richard,Wilson,richard.wilson22@mail.com,+13167679856,New York,CA,40982,2026-03-06,False
+CUST_000024,Jessica,Davis,jessica.davis23@yahoo.com,+18172687209,New York,TX,44760,2025-10-10,True
+CUST_000025,Robert,Lopez,robert.lopez24@mail.com,+19292945861,Houston,NY,85914,2025-08-26,True
+CUST_000026,Linda,Garcia,linda.garcia25@gmail.com,+12845889238,Dallas,IL,17455,2025-09-12,True
+CUST_000027,Barbara,Williams,barbara.williams26@gmail.com,+13969824853,San Antonio,CA,84668,2026-01-24,True
+CUST_000028,Maria,Johnson,maria.johnson27@company.com,+17433096147,Houston,AZ,61876,2026-03-24,True
+CUST_000029,Jessica,Garcia,jessica.garcia28@gmail.com,+12687362638,Los Angeles,TX,37938,2025-09-13,True
+CUST_000030,Michael,Anderson,michael.anderson29@outlook.com,+13414785669,Chicago,CA,81200,2025-12-27,True
+CUST_000031,William,Wilson,william.wilson30@mail.com,+16942063200,Phoenix,CA,24029,2025-08-20,True
+CUST_000032,David,Jones,david.jones31@mail.com,+15533085325,Dallas,CA,42914,2026-05-04,True
+CUST_000033,William,Miller,william.miller32@outlook.com,+12104413143,Phoenix,IL,67912,2025-08-21,False
+CUST_000034,James,Smith,james.smith33@gmail.com,+13982529938,New York,PA,86350,2025-08-21,True
+CUST_000035,Robert,Williams,robert.williams34@gmail.com,+16569151653,Philadelphia,TX,99399,2026-01-23,True
+CUST_000036,Sarah,Gonzalez,sarah.gonzalez35@mail.com,+18898673532,Houston,IL,33206,2025-10-31,True
+CUST_000037,Michael,Lopez,michael.lopez36@outlook.com,+18959845065,Phoenix,IL,24168,2025-11-16,True
+CUST_000038,Barbara,Davis,barbara.davis37@yahoo.com,+15684586000,Houston,TX,13101,2026-02-21,False
+CUST_000039,Sarah,Jones,sarah.jones38@gmail.com,+16547569346,San Antonio,TX,53404,2026-05-16,True
+CUST_000040,Thomas,Jones,thomas.jones39@yahoo.com,+16142118119,Philadelphia,PA,67199,2025-07-24,True
+CUST_000041,Robert,Anderson,robert.anderson40@mail.com,+15421458144,New York,TX,80575,2026-02-19,True
+CUST_000042,Robert,Johnson,robert.johnson41@outlook.com,+17949683041,Phoenix,TX,50538,2025-11-02,True
+CUST_000043,Robert,Lopez,robert.lopez42@outlook.com,+14345307211,Chicago,CA,84593,2025-12-27,False
+CUST_000044,James,Wilson,james.wilson43@gmail.com,+16463158043,San Jose,CA,95813,2025-12-17,False
+CUST_000045,Jessica,Davis,jessica.davis44@yahoo.com,+19317742389,Phoenix,TX,97012,2025-07-10,True
+CUST_000046,Jane,Wilson,jane.wilson45@yahoo.com,+16389254262,Chicago,NY,16057,2026-01-25,False
+CUST_000047,Maria,Wilson,maria.wilson46@gmail.com,+19637444185,San Antonio,CA,62383,2026-01-26,True
+CUST_000048,William,Lopez,william.lopez47@gmail.com,+13643243881,Dallas,CA,16582,2025-08-18,True
+CUST_000049,Thomas,Wilson,thomas.wilson48@gmail.com,+19279208612,Dallas,TX,88047,2025-12-19,False
+CUST_000050,Maria,Wilson,maria.wilson49@mail.com,+18805563607,San Diego,CA,43972,2026-01-24,True
+CUST_000051,Richard,Gonzalez,richard.gonzalez50@mail.com,+19903445499,San Diego,CA,47450,2026-01-30,True
+CUST_000052,Sarah,Garcia,sarah.garcia51@mail.com,+13272544788,San Antonio,IL,38043,2026-04-28,False
+CUST_000053,Robert,Garcia,robert.garcia52@mail.com,+19631634388,San Antonio,TX,86556,2026-05-20,False
+CUST_000054,Jessica,Smith,jessica.smith53@outlook.com,+16599737865,Dallas,TX,89069,2026-02-07,False
+CUST_000055,Emily,Jones,emily.jones54@company.com,+19134986507,San Antonio,IL,71261,2026-03-26,True
+CUST_000056,Thomas,Miller,thomas.miller55@mail.com,+12207588022,Chicago,CA,33819,2026-05-05,True
+CUST_000057,Robert,Garcia,robert.garcia56@yahoo.com,+19514457211,Phoenix,TX,43065,2026-04-19,False
+CUST_000058,John,Lopez,john.lopez57@mail.com,+12543292124,New York,NY,42411,2026-02-17,True
+CUST_000059,Maria,Williams,maria.williams58@yahoo.com,+14707852874,San Jose,TX,70952,2026-01-19,True
+CUST_000060,Michael,Martinez,michael.martinez59@mail.com,+13304182771,San Jose,NY,50888,2025-08-09,False
+CUST_000061,Robert,Lopez,robert.lopez60@yahoo.com,+13858074978,Los Angeles,AZ,99687,2025-07-27,True
+CUST_000062,Richard,Martinez,richard.martinez61@gmail.com,+17785387071,Los Angeles,TX,94874,2025-12-07,True
+CUST_000063,Barbara,Miller,barbara.miller62@company.com,+13654708532,Chicago,TX,33086,2025-09-05,True
+CUST_000064,Maria,Gonzalez,maria.gonzalez63@mail.com,+19695465397,Philadelphia,TX,21359,2026-01-08,False
+CUST_000065,Emily,Gonzalez,emily.gonzalez64@company.com,+18531299098,Philadelphia,IL,73904,2026-02-11,True
+CUST_000066,Richard,Jones,richard.jones65@outlook.com,+16868185526,Dallas,NY,77715,2026-02-22,True
+CUST_000067,Emily,Lopez,emily.lopez66@company.com,+19818764937,San Diego,CA,68743,2026-05-22,True
+CUST_000068,David,Brown,david.brown67@company.com,+15497797046,San Diego,TX,79588,2025-12-05,False
+CUST_000069,Linda,Rodriguez,linda.rodriguez68@outlook.com,+17995645438,Phoenix,AZ,40217,2026-03-30,True
+CUST_000070,Sarah,Johnson,sarah.johnson69@mail.com,+14343218933,Phoenix,CA,78765,2025-07-29,True
+CUST_000071,Jane,Wilson,jane.wilson70@yahoo.com,+16394693939,Phoenix,NY,80010,2026-03-27,True
+CUST_000072,John,Smith,john.smith71@mail.com,+16992299042,Los Angeles,NY,85243,2026-01-05,False
+CUST_000073,Jessica,Davis,jessica.davis72@outlook.com,+14163588827,Los Angeles,CA,62521,2025-09-21,True
+CUST_000074,Maria,Hernandez,maria.hernandez73@gmail.com,+14299305978,Los Angeles,TX,25525,2025-08-18,False
+CUST_000075,Maria,Martinez,maria.martinez74@mail.com,+15764898381,San Diego,AZ,87139,2025-10-23,True
+CUST_000076,Maria,Martinez,maria.martinez75@gmail.com,+13367404457,Phoenix,CA,30585,2026-01-28,True
+CUST_000077,James,Johnson,james.johnson76@yahoo.com,+12625618699,Phoenix,NY,40340,2026-01-03,True
+CUST_000078,Linda,Wilson,linda.wilson77@company.com,+13973395334,San Jose,TX,65723,2026-04-02,True
+CUST_000079,William,Williams,william.williams78@outlook.com,+14191613718,Phoenix,CA,84607,2026-01-03,False
+CUST_000080,Jane,Davis,jane.davis79@outlook.com,+18446129847,San Diego,CA,20543,2025-07-28,True
+CUST_000081,Thomas,Miller,thomas.miller80@outlook.com,+16131934750,San Jose,CA,12719,2026-01-13,True
+CUST_000082,Richard,Gonzalez,richard.gonzalez81@yahoo.com,+19767678245,Phoenix,IL,86720,2025-10-19,False
+CUST_000083,Jane,Davis,jane.davis82@outlook.com,+18524282713,Chicago,PA,63955,2025-09-19,True
+CUST_000084,William,Miller,william.miller83@mail.com,+12681906153,Phoenix,PA,25194,2025-11-05,True
+CUST_000085,William,Wilson,william.wilson84@mail.com,+19621554073,Dallas,PA,91609,2025-09-17,False
+CUST_000086,Richard,Smith,richard.smith85@yahoo.com,+16802345719,San Diego,CA,25915,2026-05-16,True
+CUST_000087,Linda,Williams,linda.williams86@outlook.com,+12805172527,Houston,CA,70482,2026-03-31,True
+CUST_000088,Jessica,Anderson,jessica.anderson87@outlook.com,+16639548905,San Diego,TX,69871,2025-08-21,True
+CUST_000089,Robert,Brown,robert.brown88@mail.com,+14183827798,Philadelphia,TX,45018,2026-05-29,True
+CUST_000090,Linda,Jones,linda.jones89@mail.com,+19295579824,San Diego,PA,53573,2025-08-21,False
+CUST_000091,Jessica,Anderson,jessica.anderson90@outlook.com,+15993447274,Houston,TX,15720,2025-12-19,False
+CUST_000092,Linda,Anderson,linda.anderson91@company.com,+18949113492,San Diego,NY,26547,2025-09-15,True
+CUST_000093,Barbara,Johnson,barbara.johnson92@company.com,+13775671251,Chicago,TX,95823,2026-03-12,True
+CUST_000094,Jessica,Gonzalez,jessica.gonzalez93@outlook.com,+17898097512,Los Angeles,PA,98389,2025-08-30,False
+CUST_000095,Sarah,Hernandez,sarah.hernandez94@company.com,+12891704846,Phoenix,TX,21846,2025-10-20,True
+CUST_000096,Richard,Hernandez,richard.hernandez95@gmail.com,+19318105906,New York,NY,52516,2026-05-02,True
+CUST_000097,Sarah,Garcia,sarah.garcia96@company.com,+14416437751,San Jose,IL,32280,2026-03-02,True
+CUST_000098,Maria,Wilson,maria.wilson97@company.com,+15736973344,Houston,CA,93611,2026-01-20,False
+CUST_000099,David,Hernandez,david.hernandez98@gmail.com,+19467939955,Chicago,CA,67898,2025-12-05,True
+CUST_000100,William,Miller,william.miller99@outlook.com,+19483037302,San Diego,CA,41091,2025-11-16,True

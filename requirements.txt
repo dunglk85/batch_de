@@ -1,0 +1,41 @@
+# Core Airflow
+apache-airflow==2.7.3
+apache-airflow-providers-postgres==5.10.0
+apache-airflow-providers-http==4.7.0
+
+# Data Processing
+pyspark==3.5.3
+delta-spark==3.0.0
+pandas==2.1.1
+numpy==1.24.3
+
+# Data Quality & Validation
+great-expectations==0.17.12
+pandas-profiling==3.2.0
+
+# Database
+psycopg2-binary==2.9.7
+sqlalchemy==1.4.49
+alembic==1.12.1
+
+# Monitoring & Observability
+prometheus-client==0.17.1
+python-json-logger==2.0.7
+
+# Testing
+pytest==7.4.2
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+requests==2.31.0
+cryptography==41.0.4
+pyarrow==13.0.0
+
+# Development
+ipython==8.16.0
+black==23.11.0
+flake8==6.1.0
+mypy==1.6.1

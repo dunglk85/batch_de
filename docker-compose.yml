@@ -1,0 +1,223 @@
+version: '3.8'
+
+services:
+  # PostgreSQL: Airflow metadata database + Stack A (DWH)
+  postgres:
+    image: postgres:15-alpine
+    container_name: dataops-postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_trgm"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dataops-net
+
+  # Apache Airflow: Orchestration
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dataops-airflow-webserver
+    environment:
+      AIRFLOW_HOME: /home/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__DATABASE__SQLALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      AIRFLOW_WEBSERVER_SECRET_KEY: ${AIRFLOW_SECRET_KEY:-dev-secret-key-change-in-prod}
+      # PySpark Configuration
+      PYSPARK_PYTHON: /usr/local/bin/python
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
+    volumes:
+      - ./dags:/home/airflow/dags
+      - ./data:/home/airflow/data
+      - ./config:/home/airflow/config
+      - ./pyspark:/home/airflow/pyspark
+      - ./scripts:/home/airflow/scripts
+      - airflow-logs:/home/airflow/logs
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+      airflow db init &&
+      airflow users create --username airflow --password airflow --firstname Airflow --lastname Admin --role Admin --email admin@airflow.com || true &&
+      airflow webserver
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dataops-net
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dataops-airflow-scheduler
+    environment:
+      AIRFLOW_HOME: /home/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__DATABASE__SQLALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      PYSPARK_PYTHON: /usr/local/bin/python
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
+    volumes:
+      - ./dags:/home/airflow/dags
+      - ./data:/home/airflow/data
+      - ./config:/home/airflow/config
+      - ./pyspark:/home/airflow/pyspark
+      - ./scripts:/home/airflow/scripts
+      - airflow-logs:/home/airflow/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: airflow scheduler
+    networks:
+      - dataops-net
+
+  # PySpark: Stack B (Lakehouse) Processing
+  spark-master:
+    image: spark:3.5.3-scala2.12-java11-python3-ubuntu
+    container_name: dataops-spark-master
+    command:
+      - "/opt/spark/bin/spark-class"
+      - "org.apache.spark.deploy.master.Master"
+    environment:
+      SPARK_DRIVER_MEMORY: 2g
+      SPARK_EXECUTOR_MEMORY: 2g
+    volumes:
+      - ./pyspark:/opt/spark-apps
+      - ./data:/data
+      - spark-data:/opt/spark/data
+    ports:
+      - "8888:8080"
+      - "7077:7077"
+      - "4040:4040"
+    networks:
+      - dataops-net
+
+  spark-worker-1:
+    image: spark:3.5.3-scala2.12-java11-python3-ubuntu
+    container_name: dataops-spark-worker-1
+    command:
+      - "/opt/spark/bin/spark-class"
+      - "org.apache.spark.deploy.worker.Worker"
+      - "spark://spark-master:7077"
+    environment:
+      SPARK_WORKER_MEMORY: 1g
+      SPARK_WORKER_CORES: 2
+    volumes:
+      - ./pyspark:/opt/spark-apps
+      - ./data:/data
+    ports:
+      - "8081:8081"
+    depends_on:
+      - spark-master
+    networks:
+      - dataops-net
+
+  # Prometheus: Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dataops-prometheus
+    volumes:
+      - ./config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - airflow-webserver
+    networks:
+      - dataops-net
+
+  # Grafana: Visualization & Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dataops-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - ./config/monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - dataops-net
+
+  # MinIO: S3-compatible Object Storage (for Delta Lake in Stack B)
+  minio:
+    image: minio/minio:latest
+    container_name: dataops-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin123}
+    command: minio server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - dataops-net
+
+  # Optional: Jupyter Notebook for exploration
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: dataops-jupyter
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      SPARK_MASTER: spark://spark-master:7077
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/data
+      - ./pyspark:/pyspark
+    ports:
+      - "8889:8888"
+    depends_on:
+      - spark-master
+    networks:
+      - dataops-net
+
+volumes:
+  postgres-data:
+  airflow-logs:
+  spark-data:
+  prometheus-data:
+  grafana-data:
+  minio-data:
+
+networks:
+  dataops-net:
+    driver: bridge
