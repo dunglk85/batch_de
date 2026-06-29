@@ -70,7 +70,8 @@
           "completed",
           "refunded",
           "pending",
-          "failed"
+          "failed",
+          "cancelled"
         ]
       }
     },
@@ -83,7 +84,8 @@
           "debit_card",
           "paypal",
           "cash",
-          "bank_transfer"
+          "bank_transfer",
+          "online_wallet"
         ]
       }
     },

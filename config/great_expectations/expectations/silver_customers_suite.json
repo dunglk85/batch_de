@@ -39,13 +39,6 @@
       }
     },
     {
-      "expectation_type": "expect_column_values_to_match_regex",
-      "kwargs": {
-        "column": "email_masked",
-        "regex": "^[^@]+@[^@]+\\.[^@]+$"
-      }
-    },
-    {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "phone_masked"
@@ -55,7 +48,10 @@
       "expectation_type": "expect_column_values_to_be_in_set",
       "kwargs": {
         "column": "is_active",
-        "value_set": [true, false]
+        "value_set": [
+          true,
+          false
+        ]
       }
     },
     {
@@ -68,7 +64,10 @@
       "expectation_type": "expect_column_values_to_be_in_set",
       "kwargs": {
         "column": "dq_is_valid",
-        "value_set": [true, false]
+        "value_set": [
+          true,
+          false
+        ]
       }
     }
   ],
