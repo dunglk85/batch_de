@@ -248,22 +248,22 @@ def aggregate_silver_to_gold(**kwargs):
         INSERT INTO stack_a.gold_daily_sales_fact
         SELECT 
             NULL,
-            DATE(transaction_date) as transaction_date,
-            customer_id,
-            product_id,
+            DATE(t.transaction_date) as transaction_date,
+            t.customer_id,
+            t.product_id,
             p.category,
-            store_location,
-            SUM(quantity) as quantity,
-            SUM(amount) as gross_amount,
-            SUM(amount) * 0.95 as net_amount,  -- Simulate 5% fees
+            t.store_location,
+            SUM(t.quantity) as quantity,
+            SUM(t.amount) as gross_amount,
+            SUM(t.amount) * 0.95 as net_amount,
             COUNT(*) as transaction_count,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
-            SUM(CASE WHEN status = 'refunded' THEN 1 ELSE 0 END) as refunded_count,
+            SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+            SUM(CASE WHEN t.status = 'refunded' THEN 1 ELSE 0 END) as refunded_count,
             CURRENT_TIMESTAMP
         FROM stack_a.silver_transactions t
         LEFT JOIN stack_a.silver_products p ON t.product_id = p.product_id
-        WHERE dq_is_valid = TRUE
-        GROUP BY DATE(transaction_date), customer_id, product_id, p.category, store_location
+        WHERE t.dq_is_valid = TRUE
+        GROUP BY DATE(t.transaction_date), t.customer_id, t.product_id, p.category, t.store_location
         """)
         
         # 2. Customer Metrics
