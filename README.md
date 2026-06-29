@@ -309,7 +309,7 @@ Expectations:
 **Week 1:**
 - [ ] Setup local environment (Docker Compose)
 - [ ] Understand medallion architecture (Bronze/Silver/Gold)
-- [ ] 
+- [ ] Write first Airflow DAG with dummy tasks
 - [ ] Generate mock data
 
 **Week 2:**
