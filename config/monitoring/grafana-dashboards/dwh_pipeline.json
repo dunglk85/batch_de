@@ -12,7 +12,7 @@
   "tags": ["dataops", "dwh", "airflow"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "panels": [
     {
@@ -33,13 +33,13 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "airflow_dagrun_duration_seconds_sum{dag_id=\"ecommerce_dwh_stack_a_pipeline\"} / airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "expr": "airflow_dagrun_duration_seconds_sum{dag_id=\"duration\", status=\"success\"} / airflow_dagrun_duration_seconds_count{dag_id=\"duration\", status=\"success\"}",
         "legendFormat": "Avg Duration", "interval": "", "exemplar": true
       }]
     },
     {
       "id": 2,
-      "title": "DAG Runs",
+      "title": "DAG Runs (success)",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
@@ -53,31 +53,30 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "expr": "airflow_dagrun_duration_seconds_count{dag_id=\"duration\", status=\"success\"}",
         "legendFormat": "Total Runs", "interval": "", "exemplar": true
       }]
     },
     {
       "id": 3,
-      "title": "Last DAG Run Status",
+      "title": "Schedule Delay",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "options": { "graphMode": "none", "colorMode": "background", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
       "fieldConfig": {
         "defaults": {
+          "unit": "s", "min": 0,
           "thresholds": { "mode": "absolute", "steps": [
-            { "color": "red", "value": null },
-            { "color": "green", "value": 1 }
-          ]}, "color": { "mode": "thresholds" }
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 60 },
+            { "color": "red", "value": 300 }
+          ]}
         }, "overrides": []
       },
       "targets": [{
-        "expr": "count(airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\", status=\"success\"})",
-        "legendFormat": "Success", "interval": "", "exemplar": true
-      }, {
-        "expr": "count(airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\", status=\"failed\"})",
-        "legendFormat": "Failed", "interval": "", "exemplar": true
+        "expr": "airflow_dagrun_schedule_delay_sum / airflow_dagrun_schedule_delay_count",
+        "legendFormat": "Avg Delay", "interval": "", "exemplar": true
       }]
     },
     {
@@ -97,13 +96,13 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "sum(airflow_operator_failures_total)",
-        "legendFormat": "Total", "interval": "", "exemplar": true
+        "expr": "sum(airflow_ti_finish{ecommerce_dwh_stack_a_pipeline=~\".*failed.*\"})",
+        "legendFormat": "Failed Tasks", "interval": "", "exemplar": true
       }]
     },
     {
       "id": 5,
-      "title": "Scheduler Health",
+      "title": "Scheduler Heartbeat",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
@@ -140,7 +139,7 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "airflow_dag_processing_last_duration{dag_file=\"stack_a_dwh_pipeline.py\"}",
+        "expr": "airflow_dag_processing_last_duration",
         "legendFormat": "Last Parse", "interval": "", "exemplar": true
       }]
     },
@@ -155,11 +154,11 @@
         "defaults": { "unit": "s", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "airflow_dagrun_duration_seconds_sum{dag_id=\"ecommerce_dwh_stack_a_pipeline\"} / airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "expr": "airflow_dagrun_duration_seconds_sum{dag_id=\"duration\", status=\"success\"} / airflow_dagrun_duration_seconds_count{dag_id=\"duration\", status=\"success\"}",
         "legendFormat": "Avg Duration", "interval": "", "exemplar": true
       }, {
-        "expr": "airflow_dagrun_duration_seconds_max{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
-        "legendFormat": "Max Duration", "interval": "", "exemplar": true
+        "expr": "airflow_dagrun_schedule_delay_sum / airflow_dagrun_schedule_delay_count",
+        "legendFormat": "Schedule Delay", "interval": "", "exemplar": true
       }]
     },
     {
@@ -212,6 +211,27 @@
         "expr": "airflow_dag_processing_total_parse_time", "legendFormat": "Total Parse Time", "interval": "", "exemplar": true
       }, {
         "expr": "airflow_dag_processing_last_duration", "legendFormat": "Last Duration", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 11,
+      "title": "Task Duration – Silver Transformation",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dag_ecommerce_dwh_stack_a_pipeline_silver_transformation_transform_customers_duration_sum / airflow_dag_ecommerce_dwh_stack_a_pipeline_silver_transformation_transform_customers_duration_count",
+        "legendFormat": "Customers", "interval": "", "exemplar": true
+      }, {
+        "expr": "airflow_dag_ecommerce_dwh_stack_a_pipeline_silver_transformation_transform_products_duration_sum / airflow_dag_ecommerce_dwh_stack_a_pipeline_silver_transformation_transform_products_duration_count",
+        "legendFormat": "Products", "interval": "", "exemplar": true
+      }, {
+        "expr": "airflow_dag_ecommerce_dwh_stack_a_pipeline_silver_transformation_transform_transactions_duration_sum / airflow_dag_ecommerce_dwh_stack_a_pipeline_silver_transformation_transform_transactions_duration_count",
+        "legendFormat": "Transactions", "interval": "", "exemplar": true
       }]
     }
   ],
