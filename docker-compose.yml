@@ -40,6 +40,10 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
       AIRFLOW_WEBSERVER_SECRET_KEY: ${AIRFLOW_SECRET_KEY:-dev-secret-key-change-in-prod}
+      AIRFLOW__METRICS__STATSD_ON: "true"
+      AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
+      AIRFLOW__METRICS__STATSD_PORT: "9125"
+      AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
       # PySpark Configuration
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
@@ -55,6 +59,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      statsd-exporter:
+        condition: service_started
     command: >
       bash -c "
       airflow db init &&
@@ -82,6 +88,10 @@ services:
       AIRFLOW__DATABASE__SQLALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      AIRFLOW__METRICS__STATSD_ON: "true"
+      AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
+      AIRFLOW__METRICS__STATSD_PORT: "9125"
+      AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
     volumes:
@@ -94,7 +104,24 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      statsd-exporter:
+        condition: service_started
     command: airflow scheduler
+    networks:
+      - dataops-net
+
+  # StatsD Exporter for Airflow metrics
+  statsd-exporter:
+    image: prom/statsd-exporter:latest
+    container_name: dataops-statsd-exporter
+    command:
+      - "--statsd.mapping-config=/etc/statsd-exporter/mapping.yml"
+      - "--web.listen-address=:9102"
+    volumes:
+      - ./config/monitoring/statsd-mapping.yml:/etc/statsd-exporter/mapping.yml
+    ports:
+      - "9125:9125/udp"
+      - "9102:9102"
     networks:
       - dataops-net
 
@@ -103,22 +130,29 @@ services:
     image: spark:3.5.3-scala2.12-java11-python3-ubuntu
     container_name: dataops-spark-master
     command:
-      - "/opt/spark/bin/spark-class"
-      - "org.apache.spark.deploy.master.Master"
+      - "bash"
+      - "-c"
+      - |
+        mkdir -p /opt/jmx-exporter &&
+        wget -q https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar -O /opt/jmx-exporter/jmx_prometheus_javaagent.jar &&
+        exec /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     environment:
       SPARK_DRIVER_MEMORY: 2g
       SPARK_EXECUTOR_MEMORY: 2g
       SPARK_CONF_DIR: /opt/spark/conf
+      SPARK_DAEMON_JAVA_OPTS: "-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter/rules.yml"
     volumes:
       - ./pyspark:/opt/spark-apps
       - ./data:/data
       - ./config/spark/metrics.properties:/opt/spark/conf/metrics.properties
       - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./config/monitoring/jmx-exporter-rules.yml:/opt/jmx-exporter/rules.yml
       - spark-data:/opt/spark/data
     ports:
       - "8888:8080"
       - "7077:7077"
       - "4040:4040"
+      - "9404:9404"
     networks:
       - dataops-net
 
@@ -126,20 +160,26 @@ services:
     image: spark:3.5.3-scala2.12-java11-python3-ubuntu
     container_name: dataops-spark-worker-1
     command:
-      - "/opt/spark/bin/spark-class"
-      - "org.apache.spark.deploy.worker.Worker"
-      - "spark://spark-master:7077"
+      - "bash"
+      - "-c"
+      - |
+        mkdir -p /opt/jmx-exporter &&
+        wget -q https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar -O /opt/jmx-exporter/jmx_prometheus_javaagent.jar &&
+        exec /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     environment:
       SPARK_WORKER_MEMORY: 1g
       SPARK_WORKER_CORES: 2
       SPARK_CONF_DIR: /opt/spark/conf
+      SPARK_DAEMON_JAVA_OPTS: "-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter/rules.yml"
     volumes:
       - ./pyspark:/opt/spark-apps
       - ./data:/data
       - ./config/spark/metrics.properties:/opt/spark/conf/metrics.properties
       - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./config/monitoring/jmx-exporter-rules.yml:/opt/jmx-exporter/rules.yml
     ports:
       - "8081:8081"
+      - "9405:9404"
     depends_on:
       - spark-master
     networks:

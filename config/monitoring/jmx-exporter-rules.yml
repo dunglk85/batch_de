@@ -1,0 +1,70 @@
+rules:
+- pattern: 'org.apache.spark<type=(.+), name=(.+)><>(.+):'
+  name: spark_$1_$2_$3
+  type: GAUGE
+  labels:
+    type: "$1"
+    name: "$2"
+    attr: "$3"
+
+- pattern: 'org.apache.spark<type=(.+), name=(.+)><>(.+):'
+  name: spark_$1_$2_$3
+  type: COUNTER
+  labels:
+    type: "$1"
+    name: "$2"
+    attr: "$3"
+
+- pattern: 'org.apache.spark<type=ApplicationMaster, name=(.+)><>Count:'
+  name: spark_applicationmaster_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=Executor, name=(.+)><>Count:'
+  name: spark_executor_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=DAGScheduler, name=(.+)><>Count:'
+  name: spark_dagscheduler_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=BlockManager, name=(.+)><>Count:'
+  name: spark_blockmanager_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=Memory, name=(.+)><>Count:'
+  name: spark_memory_$1_count
+  type: GAUGE
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=Storage, name=(.+)><>Count:'
+  name: spark_storage_$1_count
+  type: GAUGE
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=TaskScheduler, name=(.+)><>Count:'
+  name: spark_taskscheduler_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=Shuffle, name=(.+)><>Count:'
+  name: spark_shuffle_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"
+
+- pattern: 'org.apache.spark<type=LiveListenerBus, name=(.+)><>Count:'
+  name: spark_livelistenerbus_$1_count
+  type: COUNTER
+  labels:
+    name: "$1"

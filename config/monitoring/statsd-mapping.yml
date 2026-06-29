@@ -1,0 +1,52 @@
+# StatsD to Prometheus mapping for Airflow
+mappings:
+  - match: "airflow.dagrun.*.*"
+    name: "airflow_dagrun_duration_seconds"
+    labels:
+      dag_id: "$1"
+      status: "$2"
+    type: "timer"
+
+  - match: "airflow.task.*.*.*"
+    name: "airflow_task_duration_seconds"
+    labels:
+      dag_id: "$1"
+      task_id: "$2"
+      status: "$3"
+    type: "timer"
+
+  - match: "airflow.task_instance.*.*.*"
+    name: "airflow_task_instance_duration_seconds"
+    labels:
+      dag_id: "$1"
+      task_id: "$2"
+      status: "$3"
+    type: "timer"
+
+  - match: "airflow.operator_failures_*"
+    name: "airflow_operator_failures_total"
+    labels:
+      operator: "$1"
+    type: "counter"
+
+  - match: "airflow.dag_processing.*.*"
+    name: "airflow_dag_processing_duration_seconds"
+    labels:
+      processor: "$1"
+      type: "timer"
+
+  - match: "airflow.scheduler.*"
+    name: "airflow_scheduler_$1"
+    type: "gauge"
+
+  - match: "airflow.pool.*"
+    name: "airflow_pool_$1"
+    type: "gauge"
+
+  - match: "airflow.executor.*"
+    name: "airflow_executor_$1"
+    type: "gauge"
+
+  - match: "airflow.*"
+    name: "airflow_$1"
+    type: "untyped"
