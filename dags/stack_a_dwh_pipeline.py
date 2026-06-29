@@ -53,21 +53,21 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
         cursor = conn.cursor()
         
         # Insert to bronze table (idempotent: insert or update on conflict)
+        columns = ', '.join(df.columns.tolist())
+        placeholders = ', '.join(['%s'] * len(df.columns))
         insert_query = f"""
         INSERT INTO stack_a.bronze_{table_name}
-        ({', '.join(df.columns.tolist())})
-        VALUES %s
+        ({columns})
+        VALUES ({placeholders})
         ON CONFLICT (
             {get_primary_key(table_name)}
         ) DO UPDATE SET
             _ingestion_date = CURRENT_TIMESTAMP
         """
         
-        # Convert DataFrame to list of tuples
         data = [tuple(row) for row in df.values]
         
-        # Batch insert for performance
-        execute_batch(cursor, insert_query.replace("VALUES %s", "VALUES %s"), data, page_size=1000)
+        execute_batch(cursor, insert_query, data, page_size=1000)
         
         conn.commit()
         logger.info(f"Successfully loaded {len(df)} rows to bronze_{table_name}")
