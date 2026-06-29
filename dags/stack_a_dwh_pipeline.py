@@ -374,7 +374,7 @@ def run_reconciliation(**kwargs):
     cursor = conn.cursor()
     
     try:
-        reconciliation_date = kwargs['task'].execution_date.date()
+        reconciliation_date = kwargs['execution_date'].date()
         
         # Check 1: Transaction count
         cursor.execute("""
