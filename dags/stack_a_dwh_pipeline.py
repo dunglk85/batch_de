@@ -530,16 +530,7 @@ with dag:
     # 5. Great Expectations: Data quality validation
     run_ge_validation = BashOperator(
         task_id='run_data_quality_checks',
-        bash_command="""
-        cd /home/airflow && \
-        python -c "
-        from great_expectations.data_context import DataContext
-        context = DataContext()
-        # Run checkpoint for transactions
-        results = context.run_checkpoint('transactions_checkpoint')
-        print(f'Great Expectations validation: {results}')
-        "
-        """
+        bash_command="python /home/airflow/scripts/run_ge_validation.py",
     )
     
     # 6. Publish metrics
