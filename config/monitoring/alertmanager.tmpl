@@ -1,0 +1,31 @@
+{{ define "email.subject" }}
+[{{ .Status | toUpper }}] {{ .Alerts.Firing | len }} alert(s) - {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "email.html" }}
+<html>
+<body>
+<h2>{{ .Alerts.Firing | len }} Firing Alerts</h2>
+{{ range .Alerts.Firing }}
+  <div style="margin: 10px 0; padding: 10px; border-left: 4px solid #e74c3c; background: #fdf2f2;">
+    <strong style="color: #c0392b;">[{{ .Labels.severity }}] {{ .Annotations.summary }}</strong><br>
+    <strong>Alert:</strong> {{ .Labels.alertname }}<br>
+    <strong>Description:</strong> {{ .Annotations.description }}<br>
+    <strong>Started:</strong> {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}<br>
+    {{ if .GeneratorURL }}<a href="{{ .GeneratorURL }}">View in Prometheus</a>{{ end }}
+  </div>
+{{ end }}
+
+{{ if .Alerts.Resolved | len }}
+  <h2>{{ .Alerts.Resolved | len }} Resolved Alerts</h2>
+  {{ range .Alerts.Resolved }}
+    <div style="margin: 10px 0; padding: 10px; border-left: 4px solid #27ae60; background: #f0faf0;">
+      <strong style="color: #27ae60;">[RESOLVED] {{ .Annotations.summary }}</strong><br>
+      <strong>Alert:</strong> {{ .Labels.alertname }}<br>
+      <strong>Resolved at:</strong> {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}
+    </div>
+  {{ end }}
+{{ end }}
+</body>
+</html>
+{{ end }}

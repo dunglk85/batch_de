@@ -189,6 +189,7 @@ services:
     container_name: dataops-prometheus
     volumes:
       - ./config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -201,6 +202,24 @@ services:
       - airflow-webserver
     networks:
       - dataops-net
+
+  # Alertmanager: Alert routing & email notifications
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: dataops-alertmanager
+    volumes:
+      - ./config/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./config/monitoring/alertmanager.tmpl:/etc/alertmanager/alertmanager.tmpl
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    depends_on:
+      - prometheus
+    networks:
+      - dataops-net
+    restart: unless-stopped
 
   # cAdvisor: Container resource metrics (CPU, RAM, network, disk)
   cadvisor:

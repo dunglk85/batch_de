@@ -1,0 +1,132 @@
+groups:
+  - name: dwh_pipeline_alerts
+    interval: 30s
+    rules:
+      - alert: SchedulerDown
+        expr: airflow_scheduler_heartbeat < 1
+        for: 1m
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "Airflow Scheduler is down"
+          description: "Scheduler heartbeat has been 0 for over 1 minute. Pipeline jobs will not run."
+
+      - alert: DAGProcessingErrors
+        expr: airflow_dag_processing_import_errors > 0
+        for: 2m
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "DAG import errors detected"
+          description: "There are {{ $value }} DAG import errors. Pipeline may not run."
+
+      - alert: ExecutorExhausted
+        expr: airflow_executor_open_slots < 1
+        for: 5m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "Executor has no open slots"
+          description: "All executor slots are occupied. New tasks cannot run."
+
+      - alert: PoolExhausted
+        expr: airflow_pool_open_slots_default_pool < 1
+        for: 5m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "Default pool exhausted"
+          description: "No open slots in default pool. Tasks are queued."
+
+      - alert: HighQueuedTasks
+        expr: airflow_executor_queued_tasks > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "High number of queued tasks"
+          description: "{{ $value }} tasks are queued. Pipeline may be backed up."
+
+  - name: postgresql_alerts
+    interval: 30s
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance is not reachable. Pipeline will fail."
+
+      - alert: PostgresDeadlockRate
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "PostgreSQL deadlocks detected"
+          description: "Deadlock rate is {{ $value | humanize }} per second. Check pipeline transaction ordering."
+
+      - alert: PostgresHighConnections
+        expr: pg_stat_activity_count > pg_settings_max_connections * 0.8
+        for: 2m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "PostgreSQL connection spike"
+          description: "{{ $value }} connections active (above 80% of max)."
+
+  - name: container_alerts
+    interval: 30s
+    rules:
+      - alert: ContainerHighCPU
+        expr: rate(container_cpu_usage_seconds_total{cpu="total",id!="/",id!="/docker"}[5m]) * 100 > 80
+        for: 3m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "Container CPU > 80%"
+          description: "Container {{ $labels.id }} is using {{ $value | humanize }}% CPU for over 3 minutes."
+
+      - alert: ContainerHighMemory
+        expr: container_memory_usage_bytes{id!="/",id!="/docker"} / container_spec_memory_limit_bytes{id!="/",id!="/docker"} * 100 > 90
+        for: 3m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "Container memory > 90%"
+          description: "Container {{ $labels.id }} memory usage at {{ $value | humanize }}% of limit."
+
+  - name: spark_alerts
+    interval: 30s
+    rules:
+      - alert: SparkMasterDown
+        expr: up{job="spark-master"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "Spark Master is down"
+          description: "Spark master process is unreachable."
+
+      - alert: SparkWorkerDown
+        expr: up{job="spark-worker"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "Spark Worker is down"
+          description: "Spark worker process is unreachable."
