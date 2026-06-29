@@ -465,7 +465,7 @@ with dag:
             op_kwargs={'table_name': 'transactions', 'csv_path': '/home/airflow/data/raw/transactions.csv'},
         )
     
-    # 2. Silver Layer: Transform & clean
+    # 2. Silver Layer: Transform & clean (sequential to avoid deadlocks)
     with TaskGroup("silver_transformation") as silver_tasks:
         
         transform_customers = PythonOperator(
@@ -485,6 +485,8 @@ with dag:
             python_callable=transform_bronze_to_silver,
             op_kwargs={'table_name': 'transactions'},
         )
+        
+        transform_customers >> transform_products >> transform_transactions
     
     # 3. Gold Layer: Aggregate & analyze
     aggregate_to_gold = PythonOperator(
