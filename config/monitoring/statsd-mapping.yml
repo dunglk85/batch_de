@@ -23,7 +23,7 @@ mappings:
       status: "$3"
     type: "timer"
 
-  - match: "airflow.operator_failures_*"
+  - match: "airflow.operator_failures.*"
     name: "airflow_operator_failures_total"
     labels:
       operator: "$1"
