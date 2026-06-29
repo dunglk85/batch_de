@@ -3,14 +3,10 @@
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: "airflow"
+  - job_name: "prometheus"
     static_configs:
-      - targets: ["airflow-webserver:8080"]
+      - targets: ["localhost:9090"]
 
-  - job_name: "spark-master"
+  - job_name: "postgres"
     static_configs:
-      - targets: ["spark-master:8080"]
-
-  - job_name: "spark-worker"
-    static_configs:
-      - targets: ["spark-worker-1:8081"]
+      - targets: ["postgres-exporter:9187"]

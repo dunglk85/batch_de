@@ -108,9 +108,12 @@ services:
     environment:
       SPARK_DRIVER_MEMORY: 2g
       SPARK_EXECUTOR_MEMORY: 2g
+      SPARK_CONF_DIR: /opt/spark/conf
     volumes:
       - ./pyspark:/opt/spark-apps
       - ./data:/data
+      - ./config/spark/metrics.properties:/opt/spark/conf/metrics.properties
+      - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
       - spark-data:/opt/spark/data
     ports:
       - "8888:8080"
@@ -129,9 +132,12 @@ services:
     environment:
       SPARK_WORKER_MEMORY: 1g
       SPARK_WORKER_CORES: 2
+      SPARK_CONF_DIR: /opt/spark/conf
     volumes:
       - ./pyspark:/opt/spark-apps
       - ./data:/data
+      - ./config/spark/metrics.properties:/opt/spark/conf/metrics.properties
+      - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
     ports:
       - "8081:8081"
     depends_on:
@@ -155,6 +161,19 @@ services:
       - "9090:9090"
     depends_on:
       - airflow-webserver
+    networks:
+      - dataops-net
+
+  # PostgreSQL Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: dataops-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres123@postgres:5432/airflow?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
     networks:
       - dataops-net
 
