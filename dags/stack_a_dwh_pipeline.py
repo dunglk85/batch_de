@@ -533,8 +533,8 @@ with dag:
         bash_command="""
         cd /home/airflow && \
         python -c "
-        from great_expectations import data_context
-        context = data_context.DataContext()
+        from great_expectations.data_context import DataContext
+        context = DataContext()
         # Run checkpoint for transactions
         results = context.run_checkpoint('transactions_checkpoint')
         print(f'Great Expectations validation: {results}')
