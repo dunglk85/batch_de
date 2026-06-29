@@ -8,14 +8,10 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.postgres.transfers.postgres_to_postgres import PostgresToPostgresOperator
 from airflow.utils.task_group import TaskGroup
 import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_batch
-import hashlib
-from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +23,7 @@ DEFAULT_ARGS = {
     'retry_delay': timedelta(minutes=5),
     'depends_on_past': False,
     'email': ['dataops@company.com'],
-    'email_on_failure': True,
+    'email_on_failure': False,
     'email_on_retry': False,
 }
 
@@ -51,8 +47,8 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
         conn = psycopg2.connect(
             host="postgres",
             database="airflow",
-            user="airflow",
-            password="airflow123"
+            user="postgres",
+            password="postgres123"
         )
         cursor = conn.cursor()
         
@@ -108,8 +104,8 @@ def transform_bronze_to_silver(table_name: str, **kwargs):
     conn = psycopg2.connect(
         host="postgres",
         database="airflow",
-        user="airflow",
-        password="airflow123"
+        user="postgres",
+        password="postgres123"
     )
     cursor = conn.cursor()
     
@@ -239,8 +235,8 @@ def aggregate_silver_to_gold(**kwargs):
     conn = psycopg2.connect(
         host="postgres",
         database="airflow",
-        user="airflow",
-        password="airflow123"
+        user="postgres",
+        password="postgres123"
     )
     cursor = conn.cursor()
     
@@ -345,8 +341,8 @@ def run_reconciliation(**kwargs):
     conn = psycopg2.connect(
         host="postgres",
         database="airflow",
-        user="airflow",
-        password="airflow123"
+        user="postgres",
+        password="postgres123"
     )
     cursor = conn.cursor()
     
