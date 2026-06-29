@@ -1,0 +1,606 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "bargauge", "name": "Bar gauge", "version": "" },
+    { "type": "panel", "id": "table", "name": "Table", "version": "" }
+  ],
+  "title": "DWH Pipeline – Stack A",
+  "uid": "dwh_pipeline_stack_a",
+  "tags": ["dataops", "dwh", "airflow"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Pipeline Status",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Last DAG Run Duration",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 120 },
+            { "color": "red", "value": 300 }
+          ]},
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dagrun_duration_seconds_sum{dag_id=\"ecommerce_dwh_stack_a_pipeline\"} / airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "legendFormat": "Avg Duration",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 3,
+      "title": "DAG Runs",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]}
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "legendFormat": "Total Runs",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Last DAG Run Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]},
+          "color": { "mode": "thresholds" }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "count(airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\", status=\"success\"})",
+        "legendFormat": "Success",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "count(airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\", status=\"failed\"})",
+        "legendFormat": "Failed",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 5,
+      "title": "Operator Failures",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]},
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "sum(airflow_operator_failures_total)",
+        "legendFormat": "Total",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Scheduler Health",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]},
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_scheduler_heartbeat",
+        "legendFormat": "Heartbeat",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 7,
+      "title": "DAG Processing Time",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5 },
+            { "color": "red", "value": 10 }
+          ]},
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dag_processing_last_duration{dag_file=\"stack_a_dwh_pipeline.py\"}",
+        "legendFormat": "Last Parse",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 8,
+      "title": "DAG Run Duration Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": { "showPoints": "auto", "spanNulls": false }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dagrun_duration_seconds_sum{dag_id=\"ecommerce_dwh_stack_a_pipeline\"} / airflow_dagrun_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "legendFormat": "Avg Duration",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "airflow_dagrun_duration_seconds_max{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "legendFormat": "Max Duration",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 9,
+      "title": "Executor Slots",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "showPoints": "auto", "spanNulls": false },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_executor_open_slots",
+        "legendFormat": "Open Slots",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "airflow_executor_running_tasks",
+        "legendFormat": "Running Tasks",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "airflow_executor_queued_tasks",
+        "legendFormat": "Queued Tasks",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 10,
+      "title": "Pool Slots (default_pool)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "showPoints": "auto", "spanNulls": false },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_pool_open_slots_default_pool",
+        "legendFormat": "Open",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "airflow_pool_running_slots_default_pool",
+        "legendFormat": "Running",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "airflow_pool_queued_slots_default_pool",
+        "legendFormat": "Queued",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 11,
+      "title": "DAG Processing Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": { "showPoints": "auto", "spanNulls": false }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dag_processing_total_parse_time",
+        "legendFormat": "Total Parse Time",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "airflow_dag_processing_last_duration",
+        "legendFormat": "Last Duration",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 12,
+      "title": "PostgreSQL – Active Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "showPoints": "auto", "spanNulls": false },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "pg_stat_activity_count",
+        "legendFormat": "Total Connections",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "pg_stat_database_numbackends",
+        "legendFormat": "Backends",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 13,
+      "title": "PostgreSQL – Database Size",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "showPoints": "auto", "spanNulls": false },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "pg_database_size_bytes",
+        "legendFormat": "Size",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 14,
+      "title": "PostgreSQL – Deadlocks & Rollbacks",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "showPoints": "auto", "spanNulls": false },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(pg_stat_database_deadlocks[5m])",
+        "legendFormat": "Deadlocks/s",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "rate(pg_stat_database_xact_rollback[5m])",
+        "legendFormat": "Rollbacks/s",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "rate(pg_stat_database_xact_commit[5m])",
+        "legendFormat": "Commits/s",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 15,
+      "title": "PostgreSQL – Tuples Written per Second",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "showPoints": "auto", "spanNulls": false },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(pg_stat_database_tup_inserted[5m])",
+        "legendFormat": "Inserts/s",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "rate(pg_stat_database_tup_updated[5m])",
+        "legendFormat": "Updates/s",
+        "interval": "",
+        "exemplar": true
+      }, {
+        "expr": "rate(pg_stat_database_tup_deleted[5m])",
+        "legendFormat": "Deletes/s",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 16,
+      "title": "Container Resources",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "collapsed": false
+    },
+    {
+      "id": 17,
+      "title": "CPU Usage by Container",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "minVizWidth": 0,
+        "minVizHeight": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "red", "value": 80 }
+          ]},
+          "custom": { "displayMode": "gradient" }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(container_cpu_usage_seconds_total{name=~\"/dataops.*|/airflow.*\"}[1m]) * 100",
+        "legendFormat": "{{name}}",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 18,
+      "title": "Memory Usage by Container",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "minVizWidth": 0,
+        "minVizHeight": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 524288000 },
+            { "color": "red", "value": 1073741824 }
+          ]},
+          "custom": { "displayMode": "gradient" }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "container_memory_working_set_bytes{name=~\"/dataops.*|/airflow.*\"}",
+        "legendFormat": "{{name}}",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 19,
+      "title": "CPU Usage Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 38 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": { "showPoints": "auto", "spanNulls": false }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(container_cpu_usage_seconds_total{name=~\"/dataops.*|/airflow.*\"}[1m]) * 100",
+        "legendFormat": "{{name}}",
+        "interval": "",
+        "exemplar": true
+      }]
+    },
+    {
+      "id": 20,
+      "title": "Memory Usage Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 38 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "options": {
+        "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "showPoints": "auto", "spanNulls": false }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "container_memory_working_set_bytes{name=~\"/dataops.*|/airflow.*\"}",
+        "legendFormat": "{{name}}",
+        "interval": "",
+        "exemplar": true
+      }]
+    }
+  ],
+  "time": { "from": "now-1h", "to": "now" }
+}

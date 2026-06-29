@@ -204,6 +204,21 @@ services:
     networks:
       - dataops-net
 
+  # cAdvisor: Container resource metrics (CPU, RAM, network, disk)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: dataops-cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    privileged: true
+    networks:
+      - dataops-net
+    restart: unless-stopped
+
   # PostgreSQL Exporter
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
