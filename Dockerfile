@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir -r /requirements.txt
 
 # Create necessary directories
 RUN mkdir -p /home/airflow/data/{raw,bronze,silver,gold} \
-    /home/airflow/config \
+    /home/airflow/config/great_expectations/{expectations,checkpoints,uncommitted/validations,uncommitted/data_docs/local_site,profilers,plugins} \
     /home/airflow/pyspark \
     /home/airflow/scripts \
     /home/airflow/logs

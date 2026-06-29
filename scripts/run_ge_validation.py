@@ -2,7 +2,8 @@
 import sys
 from great_expectations.data_context import DataContext
 
-context = DataContext()
+# Use the Great Expectations config directory in the container
+context = DataContext("/home/airflow/config/great_expectations")
 results = context.run_checkpoint('transactions_checkpoint')
 print(f'Great Expectations validation: {results}')
 
