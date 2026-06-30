@@ -3,9 +3,11 @@ Stack B: Lakehouse Pipeline - Silver Layer
 PySpark + Delta Lake: Cleaned, Validated, Deduplicated
 """
 
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, BooleanType, TimestampType, DateType
-from pyspark.sql.functions import col, to_timestamp, to_date, current_timestamp, md5, concat_ws, lit, when, regexp_replace, sha2, row_number
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StringType
+from pyspark.sql.functions import (
+    col, current_timestamp, lit, when, sha2, row_number
+)
 from pyspark.sql.window import Window
 from datetime import datetime
 import logging
@@ -24,14 +26,18 @@ def init_spark_session(app_name: str = "stack_b_silver_transformation") -> Spark
         .appName(app_name) \
         .master("spark://spark-master:7077") \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-        .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
+        .config("spark.sql.catalog.spark_catalog",
+                "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+        .config("spark.delta.logStore.class",
+                "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
         .config("spark.hadoop.fs.s3a.endpoint", "http://dataops-minio:9000") \
         .config("spark.hadoop.fs.s3a.access.key", "dataops-key") \
         .config("spark.hadoop.fs.s3a.secret.key", "dataops-secret") \
         .config("spark.hadoop.fs.s3a.path.style.access", "true") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-        .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262") \
+        .config("spark.jars.packages",
+                "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,"
+                "com.amazonaws:aws-java-sdk-bundle:1.12.262") \
         .config("spark.ui.enabled", "false") \
         .getOrCreate()
     spark.sparkContext.setLogLevel("INFO")
@@ -45,13 +51,12 @@ class SilverLayerTransformer:
         self.bronze_location = BRONZE_LOCATION
         self.silver_location = SILVER_LOCATION
 
-    # ========================================================================
     # Silver: Customers - PII Masking, Validation, Dedup
-    # ========================================================================
 
     def transform_customers(self, load_date: str) -> int:
         logger.info("Transforming customers: bronze -> silver")
-        df = self.spark.read.format("delta").load(f"{self.bronze_location}/customers")
+        df = self.spark.read.format("delta") \
+            .load(f"{self.bronze_location}/customers")
 
         df_clean = df.dropDuplicates(["customer_id"])
 
@@ -75,9 +80,11 @@ class SilverLayerTransformer:
                        "email_masked", "phone_masked",
                        "city", "state", "zip_code", "created_date", "is_active",
                        "dq_is_valid", "dq_validation_errors",
-                       "_ingestion_timestamp", "_source_system", "_load_date", "_source_file",
+                       "_ingestion_timestamp", "_source_system", "_load_date",
+                       "_source_file",
                        "_created_at", "_updated_at"]
-        df_silver = df_silver.select([c for c in silver_cols if c in df_silver.columns])
+        df_silver = df_silver.select(
+            [c for c in silver_cols if c in df_silver.columns])
 
         row_count = df_silver.count()
         df_silver.write \
@@ -89,13 +96,12 @@ class SilverLayerTransformer:
         logger.info(f"Silver customers: {row_count} rows")
         return row_count
 
-    # ========================================================================
     # Silver: Products - Validation, Dedup
-    # ========================================================================
 
     def transform_products(self, load_date: str) -> int:
         logger.info("Transforming products: bronze -> silver")
-        df = self.spark.read.format("delta").load(f"{self.bronze_location}/products")
+        df = self.spark.read.format("delta") \
+            .load(f"{self.bronze_location}/products")
 
         df_clean = df.dropDuplicates(["product_id"])
 
@@ -112,11 +118,13 @@ class SilverLayerTransformer:
             .withColumn("_updated_at", current_timestamp()) \
             .withColumn("_load_date", lit(load_date))
 
-        silver_cols = ["product_id", "product_name", "category", "price", "stock_quantity", "is_active",
+        silver_cols = ["product_id", "product_name", "category", "price",
+                       "stock_quantity", "is_active",
                        "dq_is_valid", "dq_validation_errors",
                        "_ingestion_timestamp", "_source_system", "_load_date",
                        "_created_at", "_updated_at"]
-        df_silver = df_silver.select([c for c in silver_cols if c in df_silver.columns])
+        df_silver = df_silver.select(
+            [c for c in silver_cols if c in df_silver.columns])
 
         row_count = df_silver.count()
         df_silver.write \
@@ -128,15 +136,15 @@ class SilverLayerTransformer:
         logger.info(f"Silver products: {row_count} rows")
         return row_count
 
-    # ========================================================================
     # Silver: Transactions - Validation, Dedup
-    # ========================================================================
 
     def transform_transactions(self, load_date: str) -> int:
         logger.info("Transforming transactions: bronze -> silver")
-        df = self.spark.read.format("delta").load(f"{self.bronze_location}/transactions")
+        df = self.spark.read.format("delta") \
+            .load(f"{self.bronze_location}/transactions")
 
-        window_spec = Window.partitionBy("transaction_id").orderBy(col("_ingestion_timestamp").desc())
+        window_spec = Window.partitionBy("transaction_id") \
+            .orderBy(col("_ingestion_timestamp").desc())
         df_deduped = df.withColumn("_rn", row_number().over(window_spec)) \
                        .filter(col("_rn") == 1) \
                        .drop("_rn", "_row_hash")
@@ -159,12 +167,17 @@ class SilverLayerTransformer:
             .withColumn("_updated_at", current_timestamp()) \
             .withColumn("_load_date", lit(load_date))
 
-        silver_cols = ["transaction_id", "transaction_date", "customer_id", "product_id",
-                       "quantity", "unit_price", "amount", "payment_method", "status", "store_location",
-                       "dq_is_valid", "dq_validation_errors", "dq_duplicate_found",
-                       "_ingestion_timestamp", "_source_system", "_load_date", "_source_file",
+        silver_cols = ["transaction_id", "transaction_date", "customer_id",
+                       "product_id",
+                       "quantity", "unit_price", "amount", "payment_method",
+                       "status", "store_location",
+                       "dq_is_valid", "dq_validation_errors",
+                       "dq_duplicate_found",
+                       "_ingestion_timestamp", "_source_system", "_load_date",
+                       "_source_file",
                        "_created_at", "_updated_at"]
-        df_silver = df_silver.select([c for c in silver_cols if c in df_silver.columns])
+        df_silver = df_silver.select(
+            [c for c in silver_cols if c in df_silver.columns])
 
         row_count = df_silver.count()
         df_silver.write \

@@ -35,7 +35,10 @@ SPARK_CONF = {
     "spark.hadoop.fs.s3a.secret.key": "dataops-secret",
     "spark.hadoop.fs.s3a.path.style.access": "true",
     "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-    "spark.jars.packages": "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262",
+    "spark.jars.packages": (
+        "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,"
+        "com.amazonaws:aws-java-sdk-bundle:1.12.262"
+    ),
     "spark.ui.enabled": "false",
 }
 

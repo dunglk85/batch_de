@@ -4,7 +4,6 @@ Blocks pipeline on critical expectation failures with detailed reporting.
 """
 import sys
 import os
-import json
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -16,7 +15,6 @@ WARNING_EXPECTATIONS = {"expect_table_row_count_to_be_between", "expect_column_m
 
 
 def validate_checkpoint_result(results: dict) -> int:
-    success = results.get("success", False)
     run_results = results.get("run_results", {})
 
     if not run_results:

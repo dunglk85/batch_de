@@ -4,7 +4,6 @@ Runs against a live database after deployment to verify pipeline health.
 """
 import sys
 import os
-import json
 import logging
 from datetime import datetime, timedelta
 
