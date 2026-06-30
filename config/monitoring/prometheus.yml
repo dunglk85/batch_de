@@ -23,24 +23,14 @@ scrape_configs:
     static_configs:
       - targets: ["statsd-exporter:9102"]
 
-  - job_name: "spark-master-jmx"
+  - job_name: "spark-master"
     static_configs:
       - targets: ["spark-master:9404"]
-
-  - job_name: "spark-master"
-    metrics_path: /metrics/prometheus
-    static_configs:
-      - targets: ["spark-master:8080"]
 
   - job_name: "cadvisor"
     static_configs:
       - targets: ["cadvisor:8080"]
 
-  - job_name: "spark-worker-jmx"
+  - job_name: "spark-worker"
     static_configs:
       - targets: ["spark-worker-1:9404"]
-
-  - job_name: "spark-worker"
-    metrics_path: /metrics/prometheus
-    static_configs:
-      - targets: ["spark-worker-1:8081"]
