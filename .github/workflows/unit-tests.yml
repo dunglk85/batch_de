@@ -1,0 +1,101 @@
+name: Unit Tests & Data Quality Gate
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pip install flake8 black
+      - run: flake8 dags/ pyspark/ scripts/ --max-line-length=140
+      - run: black --check --diff dags/ pyspark/ scripts/
+
+  schema-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python scripts/schema_check.py
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: [lint, schema-compatibility]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: airflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run unit tests
+        run: python -m pytest tests/ -v --tb=short -o "addopts="
+        env:
+          DB_HOST: localhost
+          DB_NAME: airflow
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
+
+  data-quality-gate:
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: airflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Initialize schema
+        run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
+      - name: Run Great Expectations validation against test data
+        working-directory: config/great_expectations
+        run: |
+          python -c "
+          from great_expectations.data_context import DataContext
+          context = DataContext('.')
+          results = context.run_checkpoint('transactions_checkpoint')
+          assert results['success'], 'Data quality gate: critical expectations failed'
+          print('Data quality gate PASSED')
+          "

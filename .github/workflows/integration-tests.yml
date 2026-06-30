@@ -1,0 +1,87 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: airflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Initialize database schema
+        run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
+        env:
+          PGPASSWORD: postgres123
+
+      - name: Generate mock data
+        run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
+
+      - name: Validate DAG imports
+        run: python -m pytest tests/ -v --tb=short -o "addopts="
+        env:
+          DB_HOST: localhost
+          DB_NAME: airflow
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
+          AIRFLOW_HOME: /home/airflow
+
+      - name: Run end-to-end pipeline simulation (Stack A)
+        run: |
+          python -c "
+          import sys, os
+          sys.path.insert(0, 'dags')
+          from stack_a_dwh_pipeline import load_csv_to_bronze, transform_bronze_to_silver, aggregate_silver_to_gold
+
+          # Run bronze ingestion (simulated task context)
+          mock_kwargs = {'task': type('obj', (object,), {'start_date': None})()}
+          load_csv_to_bronze('customers', 'data/raw/customers.csv')
+          load_csv_to_bronze('products', 'data/raw/products.csv')
+          load_csv_to_bronze('transactions', 'data/raw/transactions.csv')
+          print('Bronze ingestion complete')
+
+          transform_bronze_to_silver('customers')
+          transform_bronze_to_silver('products')
+          transform_bronze_to_silver('transactions')
+          print('Silver transformation complete')
+
+          aggregate_silver_to_gold()
+          print('Gold aggregation complete')
+          " 2>&1 | tail -20
+        env:
+          DB_HOST: localhost
+          DB_NAME: airflow
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
+
+      - name: Run Great Expectations validation
+        working-directory: config/great_expectations
+        run: |
+          python -c "
+          from great_expectations.data_context import DataContext
+          context = DataContext('.')
+          results = context.run_checkpoint('transactions_checkpoint')
+          print(f'Checkpoint success: {results[\"success\"]}')
+          if not results['success']:
+              sys.exit(1)
+          "

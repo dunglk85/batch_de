@@ -1,0 +1,164 @@
+{
+  "version": "1.0",
+  "stack_a": {
+    "bronze_customers": {
+      "columns": {
+        "customer_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "first_name": {"type": "VARCHAR(100)", "nullable": true},
+        "last_name": {"type": "VARCHAR(100)", "nullable": true},
+        "email": {"type": "VARCHAR(255)", "nullable": true},
+        "phone": {"type": "VARCHAR(20)", "nullable": true},
+        "city": {"type": "VARCHAR(100)", "nullable": true},
+        "state": {"type": "VARCHAR(10)", "nullable": true},
+        "zip_code": {"type": "VARCHAR(10)", "nullable": true},
+        "created_date": {"type": "DATE", "nullable": true},
+        "is_active": {"type": "BOOLEAN", "nullable": true},
+        "_ingestion_date": {"type": "TIMESTAMP", "nullable": true},
+        "_source_system": {"type": "VARCHAR(50)", "nullable": true},
+        "_load_uuid": {"type": "UUID", "nullable": true}
+      }
+    },
+    "bronze_products": {
+      "columns": {
+        "product_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "product_name": {"type": "VARCHAR(255)", "nullable": true},
+        "category": {"type": "VARCHAR(100)", "nullable": true},
+        "price": {"type": "NUMERIC(10,2)", "nullable": true},
+        "stock_quantity": {"type": "INT", "nullable": true},
+        "is_active": {"type": "BOOLEAN", "nullable": true},
+        "_ingestion_date": {"type": "TIMESTAMP", "nullable": true},
+        "_source_system": {"type": "VARCHAR(50)", "nullable": true},
+        "_load_uuid": {"type": "UUID", "nullable": true}
+      }
+    },
+    "bronze_transactions": {
+      "columns": {
+        "transaction_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "transaction_date": {"type": "TIMESTAMP", "nullable": true},
+        "customer_id": {"type": "VARCHAR(20)", "nullable": true},
+        "product_id": {"type": "VARCHAR(20)", "nullable": true},
+        "quantity": {"type": "INT", "nullable": true},
+        "unit_price": {"type": "NUMERIC(10,2)", "nullable": true},
+        "amount": {"type": "NUMERIC(10,2)", "nullable": true},
+        "payment_method": {"type": "VARCHAR(50)", "nullable": true},
+        "status": {"type": "VARCHAR(50)", "nullable": true},
+        "store_location": {"type": "VARCHAR(100)", "nullable": true},
+        "_ingestion_date": {"type": "TIMESTAMP", "nullable": true},
+        "_source_system": {"type": "VARCHAR(50)", "nullable": true},
+        "_load_uuid": {"type": "UUID", "nullable": true},
+        "_hash_row": {"type": "VARCHAR(64)", "nullable": true}
+      }
+    },
+    "silver_customers": {
+      "columns": {
+        "customer_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "first_name": {"type": "VARCHAR(100)", "nullable": false},
+        "last_name": {"type": "VARCHAR(100)", "nullable": false},
+        "email_masked": {"type": "VARCHAR(255)", "nullable": true},
+        "phone_masked": {"type": "VARCHAR(20)", "nullable": true},
+        "city": {"type": "VARCHAR(100)", "nullable": true},
+        "state": {"type": "VARCHAR(10)", "nullable": true},
+        "zip_code": {"type": "VARCHAR(10)", "nullable": true},
+        "created_date": {"type": "DATE", "nullable": false},
+        "is_active": {"type": "BOOLEAN", "nullable": false},
+        "dq_is_valid": {"type": "BOOLEAN", "nullable": true},
+        "dq_validation_errors": {"type": "TEXT", "nullable": true},
+        "_created_at": {"type": "TIMESTAMP", "nullable": true},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true},
+        "_bronze_load_uuid": {"type": "UUID", "nullable": true}
+      }
+    },
+    "silver_products": {
+      "columns": {
+        "product_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "product_name": {"type": "VARCHAR(255)", "nullable": false},
+        "category": {"type": "VARCHAR(100)", "nullable": false},
+        "price": {"type": "NUMERIC(10,2)", "nullable": false},
+        "stock_quantity": {"type": "INT", "nullable": false},
+        "is_active": {"type": "BOOLEAN", "nullable": false},
+        "dq_is_valid": {"type": "BOOLEAN", "nullable": true},
+        "dq_validation_errors": {"type": "TEXT", "nullable": true},
+        "_created_at": {"type": "TIMESTAMP", "nullable": true},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true},
+        "_bronze_load_uuid": {"type": "UUID", "nullable": true}
+      }
+    },
+    "silver_transactions": {
+      "columns": {
+        "transaction_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "transaction_date": {"type": "TIMESTAMP", "nullable": false},
+        "customer_id": {"type": "VARCHAR(20)", "nullable": false},
+        "product_id": {"type": "VARCHAR(20)", "nullable": false},
+        "quantity": {"type": "INT", "nullable": false},
+        "unit_price": {"type": "NUMERIC(10,2)", "nullable": false},
+        "amount": {"type": "NUMERIC(10,2)", "nullable": false},
+        "payment_method": {"type": "VARCHAR(50)", "nullable": false},
+        "status": {"type": "VARCHAR(50)", "nullable": false},
+        "store_location": {"type": "VARCHAR(100)", "nullable": true},
+        "dq_is_valid": {"type": "BOOLEAN", "nullable": true},
+        "dq_validation_errors": {"type": "TEXT", "nullable": true},
+        "dq_duplicate_found": {"type": "BOOLEAN", "nullable": true},
+        "_created_at": {"type": "TIMESTAMP", "nullable": true},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true},
+        "_bronze_load_uuid": {"type": "UUID", "nullable": true}
+      }
+    },
+    "gold_daily_sales_fact": {
+      "columns": {
+        "fact_id": {"type": "SERIAL", "nullable": false, "pk": true},
+        "transaction_date": {"type": "DATE", "nullable": false},
+        "customer_id": {"type": "VARCHAR(20)", "nullable": true},
+        "product_id": {"type": "VARCHAR(20)", "nullable": true},
+        "category": {"type": "VARCHAR(100)", "nullable": true},
+        "store_location": {"type": "VARCHAR(100)", "nullable": true},
+        "quantity": {"type": "INT", "nullable": false},
+        "gross_amount": {"type": "NUMERIC(12,2)", "nullable": false},
+        "net_amount": {"type": "NUMERIC(12,2)", "nullable": false},
+        "transaction_count": {"type": "INT", "nullable": false},
+        "completed_count": {"type": "INT", "nullable": false},
+        "refunded_count": {"type": "INT", "nullable": false},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true}
+      }
+    },
+    "gold_customer_metrics": {
+      "columns": {
+        "customer_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "customer_lifetime_value": {"type": "NUMERIC(12,2)", "nullable": true},
+        "total_transactions": {"type": "INT", "nullable": true},
+        "first_purchase_date": {"type": "DATE", "nullable": true},
+        "last_purchase_date": {"type": "DATE", "nullable": true},
+        "avg_transaction_amount": {"type": "NUMERIC(10,2)", "nullable": true},
+        "preferred_category": {"type": "VARCHAR(100)", "nullable": true},
+        "preferred_payment_method": {"type": "VARCHAR(50)", "nullable": true},
+        "is_active": {"type": "BOOLEAN", "nullable": true},
+        "risk_score": {"type": "NUMERIC(3,2)", "nullable": true},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true}
+      }
+    },
+    "gold_product_metrics": {
+      "columns": {
+        "product_id": {"type": "VARCHAR(20)", "nullable": false, "pk": true},
+        "product_name": {"type": "VARCHAR(255)", "nullable": true},
+        "category": {"type": "VARCHAR(100)", "nullable": true},
+        "total_quantity_sold": {"type": "INT", "nullable": true},
+        "total_revenue": {"type": "NUMERIC(12,2)", "nullable": true},
+        "avg_rating": {"type": "NUMERIC(3,2)", "nullable": true},
+        "days_in_inventory": {"type": "INT", "nullable": true},
+        "inventory_turnover_ratio": {"type": "NUMERIC(6,2)", "nullable": true},
+        "is_profitable": {"type": "BOOLEAN", "nullable": true},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true}
+      }
+    },
+    "gold_category_trends": {
+      "columns": {
+        "trend_date": {"type": "DATE", "nullable": false, "pk": true},
+        "category": {"type": "VARCHAR(100)", "nullable": false, "pk": true},
+        "daily_sales": {"type": "NUMERIC(12,2)", "nullable": true},
+        "daily_quantity": {"type": "INT", "nullable": true},
+        "moving_avg_7_days": {"type": "NUMERIC(12,2)", "nullable": true},
+        "yoy_growth": {"type": "NUMERIC(5,2)", "nullable": true},
+        "_updated_at": {"type": "TIMESTAMP", "nullable": true}
+      }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+# GitLab CI alternative to GitHub Actions.
+# Maps to the same CI/CD lifecycle: lint → schema → test → quality → deploy → validate
+
+stages:
+  - lint
+  - schema-check
+  - test
+  - data-quality
+  - build
+  - deploy-staging
+  - post-deploy-validate
+  - deploy-production
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+  DB_HOST: "postgres"
+  DB_NAME: "airflow"
+  DB_USER: "postgres"
+  DB_PASSWORD: "postgres123"
+
+cache:
+  paths:
+    - .pip-cache/
+    - .venv/
+
+lint:
+  stage: lint
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt flake8 black
+    - flake8 dags/ pyspark/ scripts/ --max-line-length=140
+    - black --check --diff dags/ pyspark/ scripts/
+
+schema-compatibility:
+  stage: schema-check
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt
+    - python scripts/schema_check.py
+  artifacts:
+    paths:
+      - config/schema-reference.json
+
+unit-tests:
+  stage: test
+  image: python:3.11
+  services:
+    - postgres:15-alpine
+  script:
+    - pip install -r requirements.txt
+    - python -m pytest tests/ -v --tb=short -o "addopts="
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres123
+    POSTGRES_DB: airflow
+
+data-quality-gate:
+  stage: data-quality
+  image: python:3.11
+  services:
+    - postgres:15-alpine
+  script:
+    - pip install -r requirements.txt
+    - apt-get update && apt-get install -y postgresql-client
+    - PGPASSWORD=postgres123 psql -h postgres -U postgres -d airflow -f sql/stack_a/schema.sql
+    - cd config/great_expectations
+    - >
+      python -c "
+      from great_expectations.data_context import DataContext;
+      context = DataContext('.');
+      results = context.run_checkpoint('transactions_checkpoint');
+      assert results['success'], 'Data quality gate: critical expectations failed'
+      "
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres123
+    POSTGRES_DB: airflow
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/airflow:latest .
+    - docker tag $CI_REGISTRY_IMAGE/airflow:latest $CI_REGISTRY_IMAGE/airflow:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/airflow:latest
+    - docker push $CI_REGISTRY_IMAGE/airflow:$CI_COMMIT_SHA
+  only:
+    - master
+
+deploy-staging:
+  stage: deploy-staging
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  script:
+    - docker compose -f docker-compose.yml pull
+    - docker compose -f docker-compose.yml up -d
+    - sleep 30
+    - python scripts/post_deploy_validation.py
+  environment:
+    name: staging
+  only:
+    - master
+
+deploy-production:
+  stage: deploy-production
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  script:
+    - docker compose -f docker-compose.yml up -d
+    - python scripts/post_deploy_validation.py
+    - echo "Production deployment complete"
+  environment:
+    name: production
+  when: manual
+  only:
+    - master
