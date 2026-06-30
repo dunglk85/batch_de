@@ -473,7 +473,7 @@ dag = DAG(
     "ecommerce_dwh_stack_a_pipeline",
     default_args=DEFAULT_ARGS,
     description="Stack A: Data Warehouse Pipeline (PostgreSQL + Medallion Architecture)",
-    schedule_interval="0 2 * * *",
+    schedule="0 2 * * *",
     start_date=datetime(2024, 1, 1),
     catchup=False,
     max_active_runs=1,
