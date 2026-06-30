@@ -133,8 +133,12 @@ jobs:
       - run: pip install -r requirements.txt
       - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
+        env:
+          PGHOST: localhost
       - name: Run GX checkpoints
         working-directory: config/great_expectations
+        env:
+          PGHOST: localhost
         run: |
           python -c "
           from great_expectations.data_context import DataContext
@@ -206,9 +210,11 @@ jobs:
           java-version: "17"
       - run: pip install -r requirements.txt
       - run: mkdir -p data/raw data/bronze data/silver data/gold
-      - run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
+      - name: Deploy schema
+        run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
         env:
           PGPASSWORD: postgres123
+          PGHOST: localhost
       - run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
       - name: Run Stack A end-to-end
         run: |
@@ -231,6 +237,8 @@ jobs:
           DB_PASSWORD: postgres123
       - name: Validate with GX
         working-directory: config/great_expectations
+        env:
+          PGHOST: localhost
         run: |
           python -c "
           from great_expectations.data_context import DataContext
