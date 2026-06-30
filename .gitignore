@@ -16,3 +16,4 @@ reports/
 !**/data/bronze/.gitkeep
 !**/data/silver/.gitkeep
 !**/data/gold/.gitkeep
+data/
