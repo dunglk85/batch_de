@@ -306,7 +306,7 @@ jobs:
       - run: docker compose -f docker-compose.yml up -d
       - run: sleep 30
       - name: Post-deploy validation
-        run: docker compose exec -T airflow-webserver python scripts/post_deploy_validation.py
+        run: docker compose exec -T airflow-webserver python /home/airflow/scripts/post_deploy_validation.py
 
   deploy-production:
     name: Deploy production
