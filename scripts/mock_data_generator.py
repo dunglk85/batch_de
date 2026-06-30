@@ -11,8 +11,8 @@ import argparse
 from pathlib import Path
 
 CATEGORIES = ["Electronics", "Clothing", "Home", "Sports", "Food", "Beauty", "Books"]
-PAYMENT_METHODS = ["credit_card", "debit_card", "online_wallet", "cash", "bank_transfer"]
-STATUSES = ["completed", "pending", "refunded", "cancelled"]
+PAYMENT_METHODS = ["credit_card", "debit_card", "paypal", "cash", "bank_transfer", "online_wallet"]
+STATUSES = ["completed", "pending", "refunded", "failed", "cancelled"]
 
 
 class MockDataGenerator:
@@ -169,7 +169,7 @@ class MockDataGenerator:
                 "unit_price": product["price"],
                 "amount": amount,
                 "payment_method": random.choice(PAYMENT_METHODS),
-                "status": random.choices(STATUSES, weights=[85, 5, 5, 5])[0],
+                "status": random.choices(STATUSES, weights=[85, 5, 5, 3, 2])[0],
                 "store_location": random.choice(["Online", "Store-NYC", "Store-LA", "Store-CHI"]),
             }
             transactions.append(transaction)
