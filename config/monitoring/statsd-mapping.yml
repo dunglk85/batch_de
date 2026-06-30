@@ -1,52 +1,72 @@
 # StatsD to Prometheus mapping for Airflow
+# run_id is intentionally discarded to prevent unbounded metric cardinality.
+# Low-cardinality labels only: dag_id, task_id, state, status.
+
 mappings:
-  - match: "airflow.dagrun.*.*"
+  # DAG run duration timer
+  # Format: airflow.dagrun.duration.<dag_id>.<run_id>
+  # run_id ($2) is discarded.
+  - match: "airflow.dagrun.duration.*.*"
     name: "airflow_dagrun_duration_seconds"
     labels:
       dag_id: "$1"
-      status: "$2"
     type: "timer"
 
-  - match: "airflow.task.*.*.*"
-    name: "airflow_task_duration_seconds"
+  # DAG run schedule delay timer
+  # Format: airflow.dagrun.schedule_delay.<dag_id>.<run_id>
+  - match: "airflow.dagrun.schedule_delay.*.*"
+    name: "airflow_dagrun_schedule_delay_seconds"
     labels:
       dag_id: "$1"
-      task_id: "$2"
-      status: "$3"
     type: "timer"
 
-  - match: "airflow.task_instance.*.*.*"
-    name: "airflow_task_instance_duration_seconds"
+  # DAG run state counter
+  # Format: airflow.dagrun.<dag_id>.<run_id>.<state>
+  # run_id ($2) is discarded.
+  - match: "airflow.dagrun.*.*.*"
+    name: "airflow_dagrun_total"
     labels:
       dag_id: "$1"
-      task_id: "$2"
-      status: "$3"
-    type: "timer"
-
-  - match: "airflow.operator_failures.*"
-    name: "airflow_operator_failures_total"
-    labels:
-      operator: "$1"
+      state: "$3"
     type: "counter"
 
-  - match: "airflow.dag_processing.*.*"
-    name: "airflow_dag_processing_duration_seconds"
+  # Task instance duration timer
+  # Format: airflow.ti.duration.<dag_id>.<task_id>.<run_id>
+  # run_id ($3) is discarded.
+  - match: "airflow.ti.duration.*.*.*"
+    name: "airflow_ti_duration_seconds"
     labels:
-      processor: "$1"
-      type: "timer"
+      dag_id: "$1"
+      task_id: "$2"
+    type: "timer"
 
+  # Task instance state counter
+  # Format: airflow.ti.<dag_id>.<task_id>.<run_id>.<state>
+  # run_id ($3) is discarded.
+  - match: "airflow.ti.*.*.*.*"
+    name: "airflow_ti_total"
+    labels:
+      dag_id: "$1"
+      task_id: "$2"
+      state: "$4"
+    type: "counter"
+
+  # Scheduler metrics (no run_id)
   - match: "airflow.scheduler.*"
     name: "airflow_scheduler_$1"
     type: "gauge"
 
+  # Pool metrics (no run_id)
   - match: "airflow.pool.*"
     name: "airflow_pool_$1"
     type: "gauge"
 
+  # Executor metrics (no run_id)
   - match: "airflow.executor.*"
     name: "airflow_executor_$1"
     type: "gauge"
 
+  # Catch-all: low-cardinality arbitrary metrics
   - match: "airflow.*"
     name: "airflow_$1"
     type: "untyped"

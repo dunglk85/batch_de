@@ -52,6 +52,54 @@ groups:
           summary: "High number of queued tasks"
           description: "{{ $value }} tasks are queued. Pipeline may be backed up."
 
+      # --- SLA-based alerts ---
+
+      - alert: DAGSLAViolation
+        expr: |
+          time() - (airflow_dagrun_duration_seconds_sum / airflow_dagrun_duration_seconds_count) > 1800
+        for: 5m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "DAG {{ $labels.dag_id }} SLA breach"
+          description: "DAG {{ $labels.dag_id }} average duration exceeds 30 min SLA. Current: {{ $value | humanizeDuration }}."
+
+      - alert: DAGNotStarted
+        expr: |
+          time() - max without (run_id) (airflow_dagrun_duration_seconds_count * 0) > 900
+        for: 5m
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "DAG {{ $labels.dag_id }} has not run"
+          description: "No DAG run data for {{ $labels.dag_id }} in the last 15 minutes outside the expected schedule."
+
+      - alert: DataPipelineStalled
+        expr: |
+          time() - max without (run_id) (airflow_dagrun_duration_seconds_count * 0) > 3600
+        for: 5m
+        labels:
+          severity: critical
+          team: dataops
+        annotations:
+          summary: "Data pipeline stalled"
+          description: "No pipeline activity detected for over 1 hour. Possible systemic failure."
+
+      - alert: HighTaskFailureRate
+        expr: |
+          sum(rate(airflow_ti_total{state=~"failed|up_for_retry"}[15m]))
+          /
+          sum(rate(airflow_ti_total[15m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: dataops
+        annotations:
+          summary: "Task failure rate > 10%"
+          description: "Task failure rate is {{ $value | humanize }}% over the last 15 minutes."
+
   - name: postgresql_alerts
     interval: 30s
     rules:

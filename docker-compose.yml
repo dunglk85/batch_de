@@ -199,7 +199,8 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - airflow-webserver
+      - prometheus
+      - loki
     networks:
       - dataops-net
 
@@ -248,6 +249,34 @@ services:
       - "9187:9187"
     depends_on:
       - postgres
+    networks:
+      - dataops-net
+
+    # Loki: Log Aggregation
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: dataops-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - dataops-net
+
+  # Promtail: Docker log shipper for Loki
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: dataops-promtail
+    volumes:
+      - ./config/monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
     networks:
       - dataops-net
 
@@ -310,6 +339,7 @@ volumes:
   prometheus-data:
   grafana-data:
   minio-data:
+  loki-data:
 
 networks:
   dataops-net:

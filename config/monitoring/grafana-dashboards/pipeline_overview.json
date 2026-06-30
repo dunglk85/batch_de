@@ -1,0 +1,179 @@
+{
+  "title": "DataOps Pipeline – Global Overview",
+  "uid": "pipeline_overview",
+  "tags": ["dataops", "overview"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Pipeline Health",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "max(up{job=~\"airflow|postgres|prometheus\"})",
+        "legendFormat": "All Services Up",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 2,
+      "title": "Active DAGs",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "none", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "count({__name__=~\"airflow_dagrun_duration_seconds_count|airflow_dagrun_total\"})",
+        "legendFormat": "DAGs Active",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 3,
+      "title": "Last DAG Run Status",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "sortBy": [{ "displayName": "Time", "desc": true }] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left", "displayMode": "auto" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "sum by (dag_id) (airflow_dagrun_total)",
+        "legendFormat": "{{ dag_id }}",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Recent Failures (last 1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "sum(increase(airflow_ti_total{state=~\"failed|up_for_retry\"}[1h]))",
+        "legendFormat": "Failures",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 5,
+      "title": "PostgreSQL Connections",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "red", "value": 80 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "pg_stat_activity_count / pg_settings_max_connections * 100",
+        "legendFormat": "% Used",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 6,
+      "title": "DAG Duration (All)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dagrun_duration_seconds_sum / airflow_dagrun_duration_seconds_count",
+        "legendFormat": "{{ dag_id }}",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 7,
+      "title": "Data Quality Failures (1h)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "increase(airflow_ti_total{state=\"failed\"}[1h])",
+        "legendFormat": "{{ dag_id }} / {{ task_id }}",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 8,
+      "title": "SLA Status",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "sortBy": [{ "displayName": "Avg Duration", "desc": true }] },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "align": "left", "displayMode": "auto" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 600 },
+            { "color": "red", "value": 1800 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_dagrun_duration_seconds_sum / airflow_dagrun_duration_seconds_count",
+        "legendFormat": "{{ dag_id }}",
+        "interval": ""
+      }]
+    }
+  ],
+  "time": { "from": "now-6h", "to": "now" }
+}

@@ -1,0 +1,126 @@
+{
+  "title": "Stack B – Lakehouse Debug",
+  "uid": "stack_b_debug",
+  "tags": ["dataops", "lakehouse", "stack-b", "spark", "debug"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Spark Worker Resources",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_worker_coresUsed",
+        "legendFormat": "Cores Used",
+        "interval": ""
+      }, {
+        "expr": "spark_worker_coresFree",
+        "legendFormat": "Cores Free",
+        "interval": ""
+      }, {
+        "expr": "spark_worker_memUsed_MB",
+        "legendFormat": "Mem Used (MB)",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 2,
+      "title": "Spark Applications",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_master_apps_running",
+        "legendFormat": "Running",
+        "interval": ""
+      }, {
+        "expr": "spark_master_apps_completed",
+        "legendFormat": "Completed",
+        "interval": ""
+      }, {
+        "expr": "spark_master_apps_failed",
+        "legendFormat": "Failed",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 3,
+      "title": "Delta Lake Storage",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "minio_bucket_usage_object_total",
+        "legendFormat": "Objects",
+        "interval": ""
+      }, {
+        "expr": "minio_bucket_usage_total_bytes",
+        "legendFormat": "Total Bytes",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Job Shuffle I/O",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(spark_executor_shuffle_readBytes_total[5m])",
+        "legendFormat": "Shuffle Read/s",
+        "interval": ""
+      }, {
+        "expr": "rate(spark_executor_shuffle_writeBytes_total[5m])",
+        "legendFormat": "Shuffle Write/s",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 5,
+      "title": "PySpark Job Logs",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "options": { "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "prettifyLogs": true },
+      "targets": [{
+        "expr": "{container=~\"dataops-spark.*\"} |= \"INFO\"",
+        "legendFormat": "",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Pipeline Error Logs",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "options": { "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "prettifyLogs": true },
+      "targets": [{
+        "expr": "{container=~\"dataops-spark.*|dataops-airflow.*\"} |= \"ERROR\"",
+        "legendFormat": "",
+        "interval": ""
+      }]
+    }
+  ],
+  "time": { "from": "now-3h", "to": "now" }
+}

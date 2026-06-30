@@ -1,0 +1,48 @@
+# Prometheus recording rules for aggregated, low-cardinality pipeline metrics.
+# These strip per-run dimensions (run_id) and expose stable metric names for
+# dashboards and SLA alerts.
+
+groups:
+  - name: dwh_pipeline_recording_rules
+    interval: 30s
+    rules:
+      # Stack A – DAG duration aggregated by dag_id (removes any run_id remnant)
+      - record: "airflow_dagrun:duration_avg:1h"
+        expr: |
+          avg by (dag_id) (
+            rate(airflow_dagrun_duration_seconds_sum[1h])
+            /
+            rate(airflow_dagrun_duration_seconds_count[1h])
+          )
+
+      - record: "airflow_dagrun:duration_max:1h"
+        expr: |
+          max by (dag_id) (
+            rate(airflow_dagrun_duration_seconds_sum[1h])
+            /
+            rate(airflow_dagrun_duration_seconds_count[1h])
+          )
+
+      # Stack A – DAG schedule delay by dag_id
+      - record: "airflow_dagrun:schedule_delay_avg:1h"
+        expr: |
+          avg by (dag_id) (
+            rate(airflow_dagrun_schedule_delay_seconds_sum[1h])
+            /
+            rate(airflow_dagrun_schedule_delay_seconds_count[1h])
+          )
+
+      # Stack A – DAG failure rate (last 1h)
+      - record: "airflow_dagrun:fail_rate:1h"
+        expr: |
+          sum by (dag_id) (
+            rate(airflow_dagrun_total{state=~"failed|up_for_retry"}[1h])
+          )
+          /
+          sum by (dag_id) (
+            rate(airflow_dagrun_total[1h])
+          )
+
+      # Stack B – Spark worker health
+      - record: "spark:alive_workers:avg:5m"
+        expr: avg_over_time(spark_master_aliveWorkers[5m])

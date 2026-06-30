@@ -1,0 +1,106 @@
+{
+  "title": "Stack A – DWH Debug",
+  "uid": "stack_a_debug",
+  "tags": ["dataops", "dwh", "stack-a", "debug"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "All Task Durations",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "airflow_ti_duration_seconds_sum{dag_id=\"ecommerce_dwh_stack_a_pipeline\"} / airflow_ti_duration_seconds_count{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}",
+        "legendFormat": "{{ task_id }}",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 2,
+      "title": "Task State Breakdown",
+      "type": "piechart",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "values": ["value"] }, "pieType": "pie", "reduceOptions": { "calcs": ["lastNotNull"], "values": true } },
+      "fieldConfig": {
+        "defaults": { "min": 0 }, "overrides": []
+      },
+      "targets": [{
+        "expr": "sum by (state) (airflow_ti_total{dag_id=\"ecommerce_dwh_stack_a_pipeline\"})",
+        "legendFormat": "{{ state }}",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 3,
+      "title": "DAG Runs Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "increase(airflow_dagrun_total{dag_id=\"ecommerce_dwh_stack_a_pipeline\"}[1h])",
+        "legendFormat": "{{ state }}",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 4,
+      "title": "PostgreSQL Query Stats",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(pg_stat_database_xact_commit[5m])",
+        "legendFormat": "Commits/s",
+        "interval": ""
+      }, {
+        "expr": "rate(pg_stat_database_tup_fetched[5m])",
+        "legendFormat": "Tuples Fetched/s",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 5,
+      "title": "Reconciliation Results (logs)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "options": { "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "prettifyLogs": true },
+      "targets": [{
+        "expr": "{container=\"dataops-airflow-scheduler\"} |= \"reconciliation\"",
+        "legendFormat": "",
+        "interval": ""
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Great Expectations Validation (logs)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "options": { "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "prettifyLogs": true },
+      "targets": [{
+        "expr": "{container=~\"dataops-airflow.*\"} |= \"Great Expectations\"",
+        "legendFormat": "",
+        "interval": ""
+      }]
+    }
+  ],
+  "time": { "from": "now-3h", "to": "now" }
+}
