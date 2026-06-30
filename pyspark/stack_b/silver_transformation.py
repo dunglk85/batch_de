@@ -22,6 +22,7 @@ def init_spark_session(app_name: str = "stack_b_silver_transformation") -> Spark
     os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
     spark = SparkSession.builder \
         .appName(app_name) \
+        .master("spark://spark-master:7077") \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
         .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
