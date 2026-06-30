@@ -320,19 +320,38 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 -- GRANTS & PERMISSIONS (Security)
 -- ============================================================================
 
--- Create service account for Airflow
-CREATE ROLE IF NOT EXISTS airflow_user WITH LOGIN PASSWORD 'airflow_secure_password';
+-- Create service account for Airflow (IF NOT NOT EXISTS for PG < 16 compat)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'airflow_user') THEN
+    CREATE ROLE airflow_user WITH LOGIN PASSWORD 'airflow_secure_password';
+  END IF;
+END
+$$;
 GRANT USAGE ON SCHEMA stack_a TO airflow_user;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA stack_a TO airflow_user;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA stack_a TO airflow_user;
 
 -- Create read-only role for analytics
-CREATE ROLE IF NOT EXISTS analytics_reader;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'analytics_reader') THEN
+    CREATE ROLE analytics_reader;
+  END IF;
+END
+$$;
 GRANT USAGE ON SCHEMA stack_a TO analytics_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA stack_a TO analytics_reader;
 
 -- Create analyst user
-CREATE ROLE IF NOT EXISTS analyst WITH LOGIN PASSWORD 'analyst_password';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'analyst') THEN
+    CREATE ROLE analyst WITH LOGIN PASSWORD 'analyst_password';
+  END IF;
+END
+$$;
 GRANT analytics_reader TO analyst;
 
-PRINT 'Stack A (DWH) Schema created successfully!';
+-- Notify completion
+DO $$ BEGIN RAISE NOTICE 'Stack A (DWH) Schema created successfully!'; END $$;
