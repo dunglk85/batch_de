@@ -64,6 +64,7 @@ def check_freshness(conn) -> bool:
             latest = row[0] if row and row[0] else None
             if latest is None:
                 logger.warning(f"FRESHNESS: {table} has no timestamp data (new deployment)")
+                cur.close()
                 continue
             if latest < cutoff:
                 logger.error(
@@ -76,6 +77,8 @@ def check_freshness(conn) -> bool:
             cur.close()
         except Exception as e:
             logger.error(f"FRESHNESS ERROR: {table}: {e}")
+            conn.rollback()
+            ok = False
 
     return ok
 
@@ -94,7 +97,9 @@ def check_volume(conn) -> bool:
                 logger.info(f"VOLUME OK: {table} has {count} rows")
             cur.close()
         except Exception as e:
-            logger.warning(f"VOLUME SKIP: {table}: {e}")
+            logger.error(f"VOLUME ERROR: {table}: {e}")
+            conn.rollback()
+            ok = False
     return ok
 
 
@@ -112,7 +117,9 @@ def check_nulls(conn) -> bool:
                 logger.info(f"NULL OK: {table}.{column} has 0 NULLs")
             cur.close()
         except Exception as e:
-            logger.warning(f"NULL SKIP: {table}.{column}: {e}")
+            logger.error(f"NULL ERROR: {table}.{column}: {e}")
+            conn.rollback()
+            ok = False
     return ok
 
 

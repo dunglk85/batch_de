@@ -13,6 +13,7 @@ import pandas as pd
 from psycopg2 import pool as psycopg2_pool
 from psycopg2.extras import execute_batch
 from contextlib import contextmanager
+import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,10 +28,10 @@ DEFAULT_ARGS = {
     "email_on_retry": False,
 }
 
-DB_HOST = "postgres"
-DB_NAME = "airflow"
-DB_USER = "postgres"
-DB_PASSWORD = "postgres123"
+DB_HOST = os.getenv("DB_HOST", "postgres")
+DB_NAME = os.getenv("DB_NAME", "airflow")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres123")
 POOL_SIZE = 5
 MAX_OVERFLOW = 10
 
