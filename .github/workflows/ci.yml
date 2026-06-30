@@ -135,6 +135,26 @@ jobs:
       - run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
         env:
           PGHOST: localhost
+      - run: python scripts/mock_data_generator.py --records 5000 --output-dir data/raw
+      - name: Ingest and transform data
+        run: |
+          python -c "
+          import sys; sys.path.insert(0, 'dags')
+          from stack_a_dwh_pipeline import load_csv_to_bronze, transform_bronze_to_silver, aggregate_silver_to_gold
+          load_csv_to_bronze('customers', 'data/raw/customers.csv')
+          load_csv_to_bronze('products', 'data/raw/products.csv')
+          load_csv_to_bronze('transactions', 'data/raw/transactions.csv')
+          transform_bronze_to_silver('customers')
+          transform_bronze_to_silver('products')
+          transform_bronze_to_silver('transactions')
+          aggregate_silver_to_gold()
+          print('Data quality gate: data ingested and transformed OK')
+          " 2>&1 | tail -5
+        env:
+          DB_HOST: localhost
+          DB_NAME: airflow
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
       - name: Run GX checkpoints
         working-directory: config/great_expectations
         env:
