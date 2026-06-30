@@ -184,10 +184,6 @@ def main():
             'transactions': transformer.transform_transactions(load_date),
         }
 
-        spark.read.format("delta").load(f"{SILVER_LOCATION}/customers").createOrReplaceTempView("silver_customers")
-        spark.read.format("delta").load(f"{SILVER_LOCATION}/products").createOrReplaceTempView("silver_products")
-        spark.read.format("delta").load(f"{SILVER_LOCATION}/transactions").createOrReplaceTempView("silver_transactions")
-
         logger.info(f"Silver transformation complete: {results}")
         spark.stop()
 

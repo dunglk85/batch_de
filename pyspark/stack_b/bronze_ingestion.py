@@ -132,7 +132,7 @@ class BronzeLayerIngestor:
             # Write to Delta (APPEND mode for idempotency)
             df.write \
                 .format("delta") \
-                .mode("append") \
+                .mode("overwrite") \
                 .option("mergeSchema", "true") \
                 .save(f"{self.bronze_location}/customers")
             
@@ -169,7 +169,7 @@ class BronzeLayerIngestor:
             
             df.write \
                 .format("delta") \
-                .mode("append") \
+                .mode("overwrite") \
                 .option("mergeSchema", "true") \
                 .save(f"{self.bronze_location}/products")
             
@@ -223,7 +223,7 @@ class BronzeLayerIngestor:
             # Write to Delta
             df.write \
                 .format("delta") \
-                .mode("append") \
+                .mode("overwrite") \
                 .option("mergeSchema", "true") \
                 .save(f"{self.bronze_location}/transactions")
             
@@ -320,12 +320,6 @@ def main():
             logger.info(f"{table_name} validation: {validation}")
         
         logger.info(f"Bronze ingestion complete: {results}")
-        
-        # Create or replace views for easy SQL access
-        spark.read.format("delta").load(f"{DELTA_LOCATION_BASE}/bronze/customers").createOrReplaceTempView("bronze_customers")
-        spark.read.format("delta").load(f"{DELTA_LOCATION_BASE}/bronze/products").createOrReplaceTempView("bronze_products")
-        spark.read.format("delta").load(f"{DELTA_LOCATION_BASE}/bronze/transactions").createOrReplaceTempView("bronze_transactions")
-        
         spark.stop()
         
     except Exception as e:
