@@ -4,7 +4,7 @@
   "tags": ["dataops", "lakehouse", "stack-b", "spark", "overview"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "panels": [
     {
@@ -24,36 +24,15 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Master_AliveWorkers_Value",
+        "expr": "master_alive_workers{job=\"spark-master\"}",
         "legendFormat": "Alive", "interval": "", "exemplar": true
       }]
     },
     {
       "id": 2,
-      "title": "Total Cores",
+      "title": "Cores (Used / Total)",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
-      "fieldConfig": {
-        "defaults": {
-          "min": 0,
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": null },
-            { "color": "yellow", "value": 2 },
-            { "color": "red", "value": 1 }
-          ]}
-        }, "overrides": []
-      },
-      "targets": [{
-        "expr": "spark_Master_Cores_Value", "legendFormat": "Total Cores", "interval": "", "exemplar": true
-      }]
-    },
-    {
-      "id": 3,
-      "title": "Used Cores",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
       "fieldConfig": {
@@ -67,14 +46,18 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Master_CoresUsed_Value", "legendFormat": "Used", "interval": "", "exemplar": true
+        "expr": "master_cores_used{job=\"spark-master\"}",
+        "legendFormat": "Used", "interval": "", "exemplar": true
+      }, {
+        "expr": "master_cores{job=\"spark-master\"}",
+        "legendFormat": "Total", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 4,
+      "id": 3,
       "title": "Memory (Used / Total)",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
       "fieldConfig": {
@@ -88,14 +71,18 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Master_MemoryUsed_Value", "legendFormat": "Used", "interval": "", "exemplar": true
+        "expr": "master_memory_used{job=\"spark-master\"} * 1048576",
+        "legendFormat": "Used", "interval": "", "exemplar": true
+      }, {
+        "expr": "master_memory{job=\"spark-master\"} * 1048576",
+        "legendFormat": "Total", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 5,
-      "title": "Applications Running",
+      "id": 4,
+      "title": "Running Apps",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
       "fieldConfig": {
@@ -109,12 +96,13 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Master_Apps_Value", "legendFormat": "Apps", "interval": "", "exemplar": true
+        "expr": "master_apps{job=\"spark-master\"}",
+        "legendFormat": "Apps", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 6,
-      "title": "Executors – Active Tasks",
+      "id": 5,
+      "title": "Workers – Core Utilization",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -123,16 +111,16 @@
         "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Executor_ActiveTasks_Count", "legendFormat": "Active Tasks", "interval": "", "exemplar": true
+        "expr": "worker_cores_used{job=\"spark-worker\"}",
+        "legendFormat": "Cores Used", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_Executor_CompletedTasks_Count", "legendFormat": "Completed Tasks", "interval": "", "exemplar": true
-      }, {
-        "expr": "spark_Executor_FailedTasks_Count", "legendFormat": "Failed Tasks", "interval": "", "exemplar": true
+        "expr": "worker_cores{job=\"spark-worker\"}",
+        "legendFormat": "Cores Total", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 7,
-      "title": "Executor Memory & Cores",
+      "id": 6,
+      "title": "Workers – Memory Utilization",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 8, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -141,14 +129,16 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Executor_Memory_Value", "legendFormat": "Memory", "interval": "", "exemplar": true
+        "expr": "worker_memory_used{job=\"spark-worker\"} * 1048576",
+        "legendFormat": "Memory Used", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_Executor_TotalCores_Count", "legendFormat": "Cores", "interval": "", "exemplar": true
+        "expr": "worker_memory{job=\"spark-worker\"} * 1048576",
+        "legendFormat": "Memory Total", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 8,
-      "title": "DAG Scheduler – Jobs & Stages",
+      "id": 7,
+      "title": "Master – Cores Over Time",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 16, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -157,16 +147,16 @@
         "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_DAGScheduler_jobs_active_Value", "legendFormat": "Active Jobs", "interval": "", "exemplar": true
+        "expr": "master_cores_used{job=\"spark-master\"}",
+        "legendFormat": "Used", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_DAGScheduler_stages_active_Value", "legendFormat": "Active Stages", "interval": "", "exemplar": true
-      }, {
-        "expr": "spark_DAGScheduler_stages_failed_Value", "legendFormat": "Failed Stages", "interval": "", "exemplar": true
+        "expr": "master_cores{job=\"spark-master\"}",
+        "legendFormat": "Total", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 9,
-      "title": "JVM Memory – Heap",
+      "id": 8,
+      "title": "Master – Memory Over Time",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -175,14 +165,16 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "java_lang_Memory_HeapMemoryUsage_used", "legendFormat": "Heap Used", "interval": "", "exemplar": true
+        "expr": "master_memory_used{job=\"spark-master\"} * 1048576",
+        "legendFormat": "Used", "interval": "", "exemplar": true
       }, {
-        "expr": "java_lang_Memory_HeapMemoryUsage_max", "legendFormat": "Heap Max", "interval": "", "exemplar": true
+        "expr": "master_memory{job=\"spark-master\"} * 1048576",
+        "legendFormat": "Total", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 10,
-      "title": "JVM Memory – Non-Heap",
+      "id": 9,
+      "title": "JVM – Heap Memory",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 8, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -191,14 +183,13 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "java_lang_Memory_NonHeapMemoryUsage_used", "legendFormat": "Non-Heap Used", "interval": "", "exemplar": true
-      }, {
-        "expr": "java_lang_Memory_NonHeapMemoryUsage_max", "legendFormat": "Non-Heap Max", "interval": "", "exemplar": true
+        "expr": "java_lang_Memory_HeapMemoryUsage_used{job=~\"spark-master-jmx|spark-worker-jmx\"}",
+        "legendFormat": "{{instance}}", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 11,
-      "title": "Shuffle I/O",
+      "id": 10,
+      "title": "JVM – Non-Heap Memory",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 16, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
@@ -207,41 +198,48 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "rate(spark_Shuffle_ShuffleBytesWritten_Count[1m])", "legendFormat": "Written/s", "interval": "", "exemplar": true
-      }, {
-        "expr": "rate(spark_Shuffle_ShuffleBytesRead_Count[1m])", "legendFormat": "Read/s", "interval": "", "exemplar": true
+        "expr": "java_lang_Memory_NonHeapMemoryUsage_used{job=~\"spark-master-jmx|spark-worker-jmx\"}",
+        "legendFormat": "{{instance}}", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 12,
-      "title": "Block Manager Memory",
+      "id": 11,
+      "title": "Master – Apps & Workers Over Time",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "fieldConfig": {
-        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_BlockManager_Memory_Value", "legendFormat": "Block Memory", "interval": "", "exemplar": true
+        "expr": "master_alive_workers{job=\"spark-master\"}",
+        "legendFormat": "Alive Workers", "interval": "", "exemplar": true
+      }, {
+        "expr": "master_apps{job=\"spark-master\"}",
+        "legendFormat": "Running Apps", "interval": "", "exemplar": true
+      }, {
+        "expr": "master_waiting_apps{job=\"spark-master\"}",
+        "legendFormat": "Waiting Apps", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 13,
-      "title": "Storage – RDD / DataFrames",
+      "id": 12,
+      "title": "Worker – Executors Count",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 8, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "fieldConfig": {
-        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_Storage_Memory_Value", "legendFormat": "Storage Memory Used", "interval": "", "exemplar": true
+        "expr": "worker_executors{job=\"spark-worker\"}",
+        "legendFormat": "Executors", "interval": "", "exemplar": true
       }]
     },
     {
-      "id": 14,
+      "id": 13,
       "title": "Container CPU – Stack B",
       "type": "bargauge",
       "gridPos": { "h": 6, "w": 8, "x": 16, "y": 16 },
