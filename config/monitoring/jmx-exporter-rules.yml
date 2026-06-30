@@ -1,30 +1,35 @@
 rules:
-# Spark Master metrics (via JmxSink / Dropwizard)
-- pattern: 'metrics<name=master\.(.+)><>Value'
+# Spark Master gauges
+- pattern: 'metrics<name=master\.(.+), type=gauges><>Value'
   name: spark_master_$1
   type: GAUGE
 
-# Spark Worker metrics (via JmxSink / Dropwizard)
-- pattern: 'metrics<name=worker\.(.+)><>Value'
+# Spark Worker gauges
+- pattern: 'metrics<name=worker\.(.+), type=gauges><>Value'
   name: spark_worker_$1
   type: GAUGE
 
-# Spark Driver metrics (via JmxSink / Dropwizard)
-- pattern: 'metrics<name=driver\.(.+)><>Value'
+# Spark Driver gauges
+- pattern: 'metrics<name=driver\.(.+), type=gauges><>Value'
   name: spark_driver_$1
   type: GAUGE
 
-# Spark Executor metrics (via JmxSink / Dropwizard)
-- pattern: 'metrics<name=executor\.(.+)><>Value'
+# Spark Executor gauges
+- pattern: 'metrics<name=executor\.(.+), type=gauges><>Value'
   name: spark_executor_$1
   type: GAUGE
 
-# Spark Application metrics (via JmxSink / Dropwizard)
-- pattern: 'metrics<name=application\.(.+)><>Value'
+# Spark Application gauges
+- pattern: 'metrics<name=application\.(.+), type=gauges><>Value'
   name: spark_application_$1
   type: GAUGE
 
-# Catch-all for any other metrics domain MBeans
-- pattern: 'metrics<name=(.+)><>Value'
-  name: spark_$1
-  type: GAUGE
+# Spark Master counters
+- pattern: 'metrics<name=master\.(.+), type=counters><>Count'
+  name: spark_master_$1_total
+  type: COUNTER
+
+# Spark Worker counters
+- pattern: 'metrics<name=worker\.(.+), type=counters><>Count'
+  name: spark_worker_$1_total
+  type: COUNTER

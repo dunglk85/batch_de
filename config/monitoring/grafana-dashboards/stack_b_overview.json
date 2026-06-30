@@ -4,7 +4,7 @@
   "tags": ["dataops", "lakehouse", "stack-b", "spark", "overview"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 5,
   "refresh": "30s",
   "panels": [
     {
@@ -46,10 +46,10 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_master_coresUsed",
+        "expr": "spark_worker_coresUsed",
         "legendFormat": "Used", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_master_cores",
+        "expr": "spark_worker_coresFree + spark_worker_coresUsed",
         "legendFormat": "Total", "interval": "", "exemplar": true
       }]
     },
@@ -71,10 +71,10 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_master_memoryUsed * 1048576",
+        "expr": "spark_worker_memUsed_MB * 1048576",
         "legendFormat": "Used", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_master_memory * 1048576",
+        "expr": "(spark_worker_memFree_MB + spark_worker_memUsed_MB) * 1048576",
         "legendFormat": "Total", "interval": "", "exemplar": true
       }]
     },
@@ -111,17 +111,14 @@
         "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_master_cores",
-        "legendFormat": "Master Total", "interval": "", "exemplar": true
-      }, {
-        "expr": "spark_master_coresUsed",
-        "legendFormat": "Master Used", "interval": "", "exemplar": true
-      }, {
-        "expr": "spark_worker_cores",
-        "legendFormat": "Worker Total", "interval": "", "exemplar": true
+        "expr": "spark_worker_coresFree + spark_worker_coresUsed",
+        "legendFormat": "Total", "interval": "", "exemplar": true
       }, {
         "expr": "spark_worker_coresUsed",
-        "legendFormat": "Worker Used", "interval": "", "exemplar": true
+        "legendFormat": "Used", "interval": "", "exemplar": true
+      }, {
+        "expr": "spark_worker_coresFree",
+        "legendFormat": "Free", "interval": "", "exemplar": true
       }]
     },
     {
@@ -135,17 +132,14 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "spark_master_memory * 1048576",
-        "legendFormat": "Master Total", "interval": "", "exemplar": true
+        "expr": "(spark_worker_memFree_MB + spark_worker_memUsed_MB) * 1048576",
+        "legendFormat": "Total", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_master_memoryUsed * 1048576",
-        "legendFormat": "Master Used", "interval": "", "exemplar": true
+        "expr": "spark_worker_memUsed_MB * 1048576",
+        "legendFormat": "Used", "interval": "", "exemplar": true
       }, {
-        "expr": "spark_worker_memory * 1048576",
-        "legendFormat": "Worker Total", "interval": "", "exemplar": true
-      }, {
-        "expr": "spark_worker_memoryUsed * 1048576",
-        "legendFormat": "Worker Used", "interval": "", "exemplar": true
+        "expr": "spark_worker_memFree_MB * 1048576",
+        "legendFormat": "Free", "interval": "", "exemplar": true
       }]
     },
     {
@@ -169,7 +163,7 @@
         "legendFormat": "Waiting Apps", "interval": "", "exemplar": true
       }, {
         "expr": "spark_worker_executors",
-        "legendFormat": "Worker Executors", "interval": "", "exemplar": true
+        "legendFormat": "Executors", "interval": "", "exemplar": true
       }]
     },
     {
@@ -236,8 +230,8 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "topk(5, rate(container_cpu_usage_seconds_total{cpu=\"total\", name=~\".*spark.*|.*minio.*|.*jupyter.*\"}[1m]) * 100)",
-        "legendFormat": "{{name}}", "interval": "", "exemplar": true
+        "expr": "topk(5, rate(container_cpu_usage_seconds_total{cpu=\"total\", id!=\"/\", id!=\"/docker\"}[1m]) * 100)",
+        "legendFormat": "{{id}}", "interval": "", "exemplar": true
       }]
     },
     {
@@ -259,8 +253,8 @@
         }, "overrides": []
       },
       "targets": [{
-        "expr": "topk(5, container_memory_working_set_bytes{name=~\".*spark.*|.*minio.*|.*jupyter.*\"})",
-        "legendFormat": "{{name}}", "interval": "", "exemplar": true
+        "expr": "topk(5, container_memory_working_set_bytes{id!=\"/\", id!=\"/docker\"})",
+        "legendFormat": "{{id}}", "interval": "", "exemplar": true
       }]
     }
   ],
