@@ -8,57 +8,67 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   lint:
-    name: Lint (flake8 + black)
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-lint-
-
+          restore-keys: ${{ runner.os }}-pip-lint-
       - run: pip install flake8 black
       - run: flake8 .
       - run: black --check .
 
-  typecheck:
-    name: Type check (mypy)
+  schema-compat:
+    name: Schema compat
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-schema-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-schema-
+      - run: pip install -r requirements.txt
+      - run: python scripts/schema_check.py
 
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-typecheck-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-typecheck-
-
+          restore-keys: ${{ runner.os }}-pip-typecheck-
       - run: pip install mypy -r requirements.txt
       - run: mkdir -p data/raw data/bronze data/silver data/gold
       - run: mypy dags pyspark scripts
 
   test:
-    name: Test (pytest)
+    name: Unit tests
+    needs: [lint, schema-compat, typecheck]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -74,34 +84,194 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-test-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-test-
-
+          restore-keys: ${{ runner.os }}-pip-test-
       - run: pip install -r requirements.txt
       - run: mkdir -p data/raw data/bronze data/silver data/gold
       - run: pytest --cov=./ --cov-report=xml --cov-report=term
-
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test-results
-          path: |
-            reports/
-            .pytest_cache/
+          path: reports/
+
+  data-quality-gate:
+    name: Data quality gate
+    needs: [test]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: airflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -r requirements.txt
+      - run: apt-get update && apt-get install -y postgresql-client
+      - run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
+      - name: Run GX checkpoints
+        working-directory: config/great_expectations
+        run: |
+          python -c "
+          from great_expectations.data_context import DataContext
+          context = DataContext('.')
+          results = context.run_checkpoint('transactions_checkpoint')
+          assert results['success'], 'Data quality gate: critical expectations failed'
+          print('Data quality gate PASSED')
+          "
+
+  build:
+    name: Docker build
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [data-quality-gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=,suffix=,format=short
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [build]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: airflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: pip install -r requirements.txt
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
+        env:
+          PGPASSWORD: postgres123
+      - run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
+      - name: Run Stack A end-to-end
+        run: |
+          python -c "
+          import sys; sys.path.insert(0, 'dags')
+          from stack_a_dwh_pipeline import load_csv_to_bronze, transform_bronze_to_silver, aggregate_silver_to_gold
+          load_csv_to_bronze('customers', 'data/raw/customers.csv')
+          load_csv_to_bronze('products', 'data/raw/products.csv')
+          load_csv_to_bronze('transactions', 'data/raw/transactions.csv')
+          transform_bronze_to_silver('customers')
+          transform_bronze_to_silver('products')
+          transform_bronze_to_silver('transactions')
+          aggregate_silver_to_gold()
+          print('Stack A end-to-end OK')
+          " 2>&1 | tail -5
+        env:
+          DB_HOST: localhost
+          DB_NAME: airflow
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
+      - name: Validate with GX
+        working-directory: config/great_expectations
+        run: |
+          python -c "
+          from great_expectations.data_context import DataContext
+          context = DataContext('.')
+          results = context.run_checkpoint('transactions_checkpoint')
+          assert results['success'], 'Integration GX check failed'
+          print('Integration GX validation PASSED')
+          "
+
+  deploy-staging:
+    name: Deploy staging
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [integration-test]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f docker-compose.yml pull
+      - run: docker compose -f docker-compose.yml up -d
+      - run: sleep 30
+      - name: Post-deploy validation
+        run: python scripts/post_deploy_validation.py
+        env:
+          DB_HOST: localhost
+          DB_NAME: airflow
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
+
+  deploy-production:
+    name: Deploy production
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f docker-compose.yml up -d
+      - name: Post-deploy validation
+        run: python scripts/post_deploy_validation.py
+        env:
+          DB_HOST: ${{ secrets.PROD_DB_HOST }}
+          DB_NAME: ${{ secrets.PROD_DB_NAME }}
+          DB_USER: ${{ secrets.PROD_DB_USER }}
+          DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
