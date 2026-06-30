@@ -302,6 +302,15 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-deploy-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-deploy-
+      - run: pip install -r requirements.txt
       - run: docker compose -f docker-compose.yml pull
       - run: docker compose -f docker-compose.yml up -d
       - run: sleep 30
