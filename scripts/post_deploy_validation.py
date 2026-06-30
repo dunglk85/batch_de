@@ -2,6 +2,7 @@
 Post-deployment validation: freshness, volume, null-rate checks.
 Runs against a live database after deployment to verify pipeline health.
 """
+
 import sys
 import os
 import logging
@@ -37,6 +38,7 @@ CRITICAL_NULL_COLUMNS = [
 def get_db_connection():
     try:
         import psycopg2
+
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST", "postgres"),
             database=os.getenv("DB_NAME", "airflow"),

@@ -2,6 +2,7 @@
 Great Expectations Data Quality Validation Checkpoint Runner.
 Blocks pipeline on critical expectation failures with detailed reporting.
 """
+
 import sys
 import os
 import logging

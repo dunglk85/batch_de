@@ -13,13 +13,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 DEFAULT_ARGS = {
-    'owner': 'dataops-team',
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-    'depends_on_past': False,
-    'email': ['dataops@company.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
+    "owner": "dataops-team",
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+    "depends_on_past": False,
+    "email": ["dataops@company.com"],
+    "email_on_failure": False,
+    "email_on_retry": False,
 }
 
 PYSPARK_APP_DIR = "/home/airflow/pyspark/stack_b"

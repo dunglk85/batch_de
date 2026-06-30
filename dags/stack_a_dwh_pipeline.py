@@ -18,13 +18,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 DEFAULT_ARGS = {
-    'owner': 'dataops-team',
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-    'depends_on_past': False,
-    'email': ['dataops@company.com'],
-    'email_on_failure': False,
-    'email_on_retry': False,
+    "owner": "dataops-team",
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+    "depends_on_past": False,
+    "email": ["dataops@company.com"],
+    "email_on_failure": False,
+    "email_on_retry": False,
 }
 
 DB_HOST = "postgres"
@@ -80,8 +80,8 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
         with get_pg_connection() as conn:
             cursor = conn.cursor()
 
-            columns = ', '.join(df.columns.tolist())
-            placeholders = ', '.join(['%s'] * len(df.columns))
+            columns = ", ".join(df.columns.tolist())
+            placeholders = ", ".join(["%s"] * len(df.columns))
             insert_query = f"""
             INSERT INTO stack_a.bronze_{table_name}
             ({columns})
@@ -98,18 +98,24 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
 
             logger.info(f"Successfully loaded {len(df)} rows to bronze_{table_name}")
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO stack_a.audit_load_history
                 (load_name, load_start_time, load_end_time, status, rows_inserted)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (
-                f"bronze_{table_name}", kwargs['task'].start_date,
-                datetime.now(), 'SUCCESS', len(df),
-            ))
+            """,
+                (
+                    f"bronze_{table_name}",
+                    kwargs["task"].start_date,
+                    datetime.now(),
+                    "SUCCESS",
+                    len(df),
+                ),
+            )
 
             cursor.close()
 
-        return {'rows_loaded': len(df), 'table': table_name}
+        return {"rows_loaded": len(df), "table": table_name}
 
     except Exception as e:
         logger.error(f"Failed to load {table_name}: {str(e)}")
@@ -131,7 +137,7 @@ def transform_bronze_to_silver(table_name: str, **kwargs):
         cursor = conn.cursor()
 
         try:
-            if table_name == 'customers':
+            if table_name == "customers":
                 cursor.execute("DELETE FROM stack_a.silver_customers")
 
                 sql = """
@@ -161,7 +167,7 @@ def transform_bronze_to_silver(table_name: str, **kwargs):
                 """
                 cursor.execute(sql)
 
-            elif table_name == 'products':
+            elif table_name == "products":
                 cursor.execute("DELETE FROM stack_a.silver_products")
 
                 sql = """
@@ -187,7 +193,7 @@ def transform_bronze_to_silver(table_name: str, **kwargs):
                 """
                 cursor.execute(sql)
 
-            elif table_name == 'transactions':
+            elif table_name == "transactions":
                 cursor.execute("DELETE FROM stack_a.silver_transactions")
 
                 sql = """
@@ -233,7 +239,7 @@ def transform_bronze_to_silver(table_name: str, **kwargs):
             row_count = cursor.fetchone()[0]
 
             logger.info(f"Successfully transformed {row_count} rows to silver_{table_name}")
-            return {'rows_transformed': row_count}
+            return {"rows_transformed": row_count}
 
         except Exception as e:
             logger.error(f"Failed to transform {table_name}: {str(e)}")
@@ -359,7 +365,7 @@ def aggregate_silver_to_gold(**kwargs):
             """)
 
             logger.info("Successfully aggregated data to gold layer")
-            return {'status': 'success', 'timestamp': datetime.now().isoformat()}
+            return {"status": "success", "timestamp": datetime.now().isoformat()}
 
         except Exception as e:
             logger.error(f"Failed to aggregate to gold: {str(e)}")
@@ -381,7 +387,7 @@ def run_reconciliation(**kwargs):
         cursor = conn.cursor()
 
         try:
-            reconciliation_date = kwargs['execution_date'].date()
+            reconciliation_date = kwargs["execution_date"].date()
 
             cursor.execute("SELECT COUNT(*) FROM stack_a.bronze_transactions")
             bronze_count = cursor.fetchone()[0]
@@ -414,19 +420,27 @@ def run_reconciliation(**kwargs):
             """)
             orphaned_rows = cursor.fetchone()[0]
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO stack_a.reconciliation_results
                 (reconciliation_date, table_name, source_count, target_count,
                  count_match, source_sum, target_sum, sum_match,
                  discrepancies, status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                reconciliation_date, 'transactions',
-                bronze_count, silver_count, count_match,
-                float(bronze_sum), float(silver_sum), sum_match,
-                f"Orphaned rows: {orphaned_rows}",
-                'PASSED' if (count_match and sum_match and orphaned_rows == 0) else 'FAILED'
-            ))
+            """,
+                (
+                    reconciliation_date,
+                    "transactions",
+                    bronze_count,
+                    silver_count,
+                    count_match,
+                    float(bronze_sum),
+                    float(silver_sum),
+                    sum_match,
+                    f"Orphaned rows: {orphaned_rows}",
+                    "PASSED" if (count_match and sum_match and orphaned_rows == 0) else "FAILED",
+                ),
+            )
 
             if not (count_match and sum_match and orphaned_rows == 0):
                 logger.warning(
@@ -436,7 +450,7 @@ def run_reconciliation(**kwargs):
                 raise Exception("Reconciliation checks failed!")
 
             logger.info("Reconciliation checks PASSED")
-            return {'status': 'passed'}
+            return {"status": "passed"}
 
         except Exception as e:
             logger.error(f"Reconciliation error: {str(e)}")
@@ -448,22 +462,22 @@ def run_reconciliation(**kwargs):
 def get_primary_key(table_name: str) -> str:
     """Get primary key column for each table"""
     pk_map = {
-        'customers': 'customer_id',
-        'products': 'product_id',
-        'transactions': 'transaction_id',
+        "customers": "customer_id",
+        "products": "product_id",
+        "transactions": "transaction_id",
     }
-    return pk_map.get(table_name, 'id')
+    return pk_map.get(table_name, "id")
 
 
 dag = DAG(
-    'ecommerce_dwh_stack_a_pipeline',
+    "ecommerce_dwh_stack_a_pipeline",
     default_args=DEFAULT_ARGS,
-    description='Stack A: Data Warehouse Pipeline (PostgreSQL + Medallion Architecture)',
-    schedule_interval='0 2 * * *',
+    description="Stack A: Data Warehouse Pipeline (PostgreSQL + Medallion Architecture)",
+    schedule_interval="0 2 * * *",
     start_date=datetime(2024, 1, 1),
     catchup=False,
     max_active_runs=1,
-    tags=['stack-a', 'dwh', 'production'],
+    tags=["stack-a", "dwh", "production"],
 )
 
 with dag:
@@ -471,79 +485,83 @@ with dag:
     with TaskGroup("bronze_ingestion") as bronze_tasks:
 
         load_customers = PythonOperator(
-            task_id='load_customers',
+            task_id="load_customers",
             python_callable=load_csv_to_bronze,
             op_kwargs={
-                'table_name': 'customers',
-                'csv_path': '/home/airflow/data/raw/customers.csv',
+                "table_name": "customers",
+                "csv_path": "/home/airflow/data/raw/customers.csv",
             },
         )
 
         load_products = PythonOperator(
-            task_id='load_products',
+            task_id="load_products",
             python_callable=load_csv_to_bronze,
             op_kwargs={
-                'table_name': 'products',
-                'csv_path': '/home/airflow/data/raw/products.csv',
+                "table_name": "products",
+                "csv_path": "/home/airflow/data/raw/products.csv",
             },
         )
 
         load_transactions = PythonOperator(
-            task_id='load_transactions',
+            task_id="load_transactions",
             python_callable=load_csv_to_bronze,
             op_kwargs={
-                'table_name': 'transactions',
-                'csv_path': '/home/airflow/data/raw/transactions.csv',
+                "table_name": "transactions",
+                "csv_path": "/home/airflow/data/raw/transactions.csv",
             },
         )
 
     with TaskGroup("silver_transformation") as silver_tasks:
 
         transform_customers = PythonOperator(
-            task_id='transform_customers',
+            task_id="transform_customers",
             python_callable=transform_bronze_to_silver,
-            op_kwargs={'table_name': 'customers'},
+            op_kwargs={"table_name": "customers"},
         )
 
         transform_products = PythonOperator(
-            task_id='transform_products',
+            task_id="transform_products",
             python_callable=transform_bronze_to_silver,
-            op_kwargs={'table_name': 'products'},
+            op_kwargs={"table_name": "products"},
         )
 
         transform_transactions = PythonOperator(
-            task_id='transform_transactions',
+            task_id="transform_transactions",
             python_callable=transform_bronze_to_silver,
-            op_kwargs={'table_name': 'transactions'},
+            op_kwargs={"table_name": "transactions"},
         )
 
         [transform_customers, transform_products] >> transform_transactions
 
     aggregate_to_gold = PythonOperator(
-        task_id='aggregate_to_gold',
+        task_id="aggregate_to_gold",
         python_callable=aggregate_silver_to_gold,
     )
 
     reconciliation = PythonOperator(
-        task_id='reconciliation_check',
+        task_id="reconciliation_check",
         python_callable=run_reconciliation,
     )
 
     run_ge_validation = BashOperator(
-        task_id='run_data_quality_checks',
+        task_id="run_data_quality_checks",
         bash_command="cd /home/airflow && python scripts/run_ge_validation.py",
     )
 
     publish_metrics = BashOperator(
-        task_id='publish_prometheus_metrics',
+        task_id="publish_prometheus_metrics",
         bash_command="""
         curl -X POST http://prometheus:9090/api/v1/admin/config \
           -H "Content-Type: application/json" \
           -d '{"metric": "pipeline_duration_seconds", "value": 60, \
                "timestamp": "'"$(date +%s)"'"}'
-        """
+        """,
     )
 
-    bronze_tasks >> silver_tasks >> aggregate_to_gold >> [
-        reconciliation, run_ge_validation
-    ] >> publish_metrics
+    (
+        bronze_tasks
+        >> silver_tasks
+        >> aggregate_to_gold
+        >> [reconciliation, run_ge_validation]
+        >> publish_metrics
+    )

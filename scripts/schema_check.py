@@ -3,6 +3,7 @@ Schema backward-compatibility validation.
 Compares schema.sql against a known-good reference (config/schema-reference.json).
 Exits 1 on breaking changes: column removal, type change, nullability tightening.
 """
+
 import sys
 import os
 import json
@@ -39,8 +40,7 @@ def parse_sql_schema(sql_path: str) -> dict:
         for line in body.splitlines():
             line = line.strip()
             if not line or line.upper().startswith(
-                ("PRIMARY", "FOREIGN", "INDEX", "UNIQUE",
-                 "CONSTRAINT", "CHECK", "--")
+                ("PRIMARY", "FOREIGN", "INDEX", "UNIQUE", "CONSTRAINT", "CHECK", "--")
             ):
                 continue
             col_match = re.match(
