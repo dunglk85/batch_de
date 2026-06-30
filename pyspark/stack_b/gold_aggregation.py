@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DELTA_BASE = "/data/delta"
+DELTA_BASE = "s3a://delta-lake"
 BRONZE = f"{DELTA_BASE}/bronze"
 SILVER = f"{DELTA_BASE}/silver"
 GOLD = f"{DELTA_BASE}/gold"
@@ -24,7 +24,13 @@ def init_spark_session(app_name: str = "stack_b_gold_aggregation") -> SparkSessi
         .appName(app_name) \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-        .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0") \
+        .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
+        .config("spark.hadoop.fs.s3a.endpoint", "http://dataops-minio:9000") \
+        .config("spark.hadoop.fs.s3a.access.key", "dataops-key") \
+        .config("spark.hadoop.fs.s3a.secret.key", "dataops-secret") \
+        .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+        .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262") \
         .config("spark.ui.enabled", "false") \
         .getOrCreate()
     spark.sparkContext.setLogLevel("INFO")

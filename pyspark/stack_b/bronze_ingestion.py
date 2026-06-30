@@ -18,7 +18,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Configuration
-DELTA_LOCATION_BASE = "/data/delta"
+DELTA_LOCATION_BASE = "s3a://delta-lake"
 BRONZE_LOCATION = f"{DELTA_LOCATION_BASE}/bronze"
 SOURCE_DATA_PATH = "/data/raw"
 
@@ -31,7 +31,12 @@ def init_spark_session(app_name: str = "stack_b_bronze_ingestion") -> SparkSessi
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
         .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
-        .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0") \
+        .config("spark.hadoop.fs.s3a.endpoint", "http://dataops-minio:9000") \
+        .config("spark.hadoop.fs.s3a.access.key", "dataops-key") \
+        .config("spark.hadoop.fs.s3a.secret.key", "dataops-secret") \
+        .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+        .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262") \
         .config("spark.ui.enabled", "false") \
         .getOrCreate()
     
