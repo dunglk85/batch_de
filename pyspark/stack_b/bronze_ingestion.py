@@ -10,7 +10,7 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import (
     col, to_timestamp, to_date, current_timestamp, 
-    md5, concat_ws, input_file_name, lit
+    md5, concat_ws, input_file_name, lit, row_number
 )
 from datetime import datetime
 import logging
@@ -210,7 +210,7 @@ class BronzeLayerIngestor:
             # Deduplicate: If same transaction_id exists, keep newer one
             from pyspark.sql.window import Window
             window_spec = Window.partitionBy("transaction_id").orderBy(col("_ingestion_timestamp").desc())
-            df = df.withColumn("_row_num", Window.rowNumber().over(window_spec)) \
+            df = df.withColumn("_row_num", row_number().over(window_spec)) \
                    .filter(col("_row_num") == 1) \
                    .drop("_row_num")
             
