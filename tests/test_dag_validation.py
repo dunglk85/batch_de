@@ -9,7 +9,7 @@ def test_stack_a_dag_structure():
     from airflow.models import DagBag
 
     dagbag = DagBag(dag_folder="dags", include_examples=False)
-    dag = dagbag.get_dag("ecommerce_dwh_stack_a_pipeline")
+    dag = dagbag.dags.get("ecommerce_dwh_stack_a_pipeline")
     assert dag is not None, "DAG 'ecommerce_dwh_stack_a_pipeline' not found"
     tasks = dag.tasks
     assert len(tasks) > 0, "DAG has no tasks"
@@ -19,7 +19,7 @@ def test_stack_a_dag_dependencies():
     from airflow.models import DagBag
 
     dagbag = DagBag(dag_folder="dags", include_examples=False)
-    dag = dagbag.get_dag("ecommerce_dwh_stack_a_pipeline")
+    dag = dagbag.dags.get("ecommerce_dwh_stack_a_pipeline")
     assert dag is not None
     task_ids = {t.task_id for t in dag.tasks}
     required_tasks = [
