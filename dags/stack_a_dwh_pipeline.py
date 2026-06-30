@@ -47,7 +47,6 @@ def get_pg_pool():
             database=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
-            pool_pre_ping=True,
         )
     return _pg_pool
 

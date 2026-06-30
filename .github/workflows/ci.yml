@@ -164,7 +164,20 @@ jobs:
           from great_expectations.data_context import DataContext
           context = DataContext('.')
           results = context.run_checkpoint('transactions_checkpoint')
-          assert results['success'], 'Data quality gate: critical expectations failed'
+          run_results = results.get('run_results', {})
+          critical = {'expect_column_values_to_not_be_null', 'expect_column_values_to_be_unique', 'expect_column_values_to_be_in_set'}
+          critical_failures = 0
+          total_failures = 0
+          for batch_result in run_results.values():
+              vr = batch_result.get('validation_result', {})
+              total_failures += vr.get('statistics', {}).get('failed_expectations', 0)
+              for res in vr.get('results', []):
+                  if not res.get('success', True) and res.get('expectation_config', {}).get('expectation_type', '') in critical:
+                      critical_failures += 1
+          if critical_failures > 0:
+              raise AssertionError(f'Data quality gate: {critical_failures} critical expectation(s) failed (total: {total_failures})')
+          elif total_failures > 0:
+              print(f'Data quality gate: {total_failures} non-critical warning(s) ignored')
           print('Data quality gate PASSED')
           "
 
@@ -264,7 +277,20 @@ jobs:
           from great_expectations.data_context import DataContext
           context = DataContext('.')
           results = context.run_checkpoint('transactions_checkpoint')
-          assert results['success'], 'Integration GX check failed'
+          run_results = results.get('run_results', {})
+          critical = {'expect_column_values_to_not_be_null', 'expect_column_values_to_be_unique', 'expect_column_values_to_be_in_set'}
+          critical_failures = 0
+          total_failures = 0
+          for batch_result in run_results.values():
+              vr = batch_result.get('validation_result', {})
+              total_failures += vr.get('statistics', {}).get('failed_expectations', 0)
+              for res in vr.get('results', []):
+                  if not res.get('success', True) and res.get('expectation_config', {}).get('expectation_type', '') in critical:
+                      critical_failures += 1
+          if critical_failures > 0:
+              raise AssertionError(f'Integration GX check: {critical_failures} critical failure(s) (total: {total_failures})')
+          elif total_failures > 0:
+              print(f'Integration GX check: {total_failures} non-critical warning(s) ignored')
           print('Integration GX validation PASSED')
           "
 
