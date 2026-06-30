@@ -1,0 +1,268 @@
+{
+  "title": "Stack B – Lakehouse Overview",
+  "uid": "stack_b_overview",
+  "tags": ["dataops", "lakehouse", "stack-b", "spark", "overview"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Alive Workers",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Master_AliveWorkers_Value",
+        "legendFormat": "Alive", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 2,
+      "title": "Total Cores",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 2 },
+            { "color": "red", "value": 1 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Master_Cores_Value", "legendFormat": "Total Cores", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 3,
+      "title": "Used Cores",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 2 },
+            { "color": "red", "value": 3 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Master_CoresUsed_Value", "legendFormat": "Used", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 4,
+      "title": "Memory (Used / Total)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes", "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1073741824 },
+            { "color": "red", "value": 2147483648 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Master_MemoryUsed_Value", "legendFormat": "Used", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 5,
+      "title": "Applications Running",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "graphMode": "area", "colorMode": "value", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Master_Apps_Value", "legendFormat": "Apps", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Executors – Active Tasks",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Executor_ActiveTasks_Count", "legendFormat": "Active Tasks", "interval": "", "exemplar": true
+      }, {
+        "expr": "spark_Executor_CompletedTasks_Count", "legendFormat": "Completed Tasks", "interval": "", "exemplar": true
+      }, {
+        "expr": "spark_Executor_FailedTasks_Count", "legendFormat": "Failed Tasks", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 7,
+      "title": "Executor Memory & Cores",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Executor_Memory_Value", "legendFormat": "Memory", "interval": "", "exemplar": true
+      }, {
+        "expr": "spark_Executor_TotalCores_Count", "legendFormat": "Cores", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 8,
+      "title": "DAG Scheduler – Jobs & Stages",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_DAGScheduler_jobs_active_Value", "legendFormat": "Active Jobs", "interval": "", "exemplar": true
+      }, {
+        "expr": "spark_DAGScheduler_stages_active_Value", "legendFormat": "Active Stages", "interval": "", "exemplar": true
+      }, {
+        "expr": "spark_DAGScheduler_stages_failed_Value", "legendFormat": "Failed Stages", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 9,
+      "title": "JVM Memory – Heap",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "java_lang_Memory_HeapMemoryUsage_used", "legendFormat": "Heap Used", "interval": "", "exemplar": true
+      }, {
+        "expr": "java_lang_Memory_HeapMemoryUsage_max", "legendFormat": "Heap Max", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 10,
+      "title": "JVM Memory – Non-Heap",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "java_lang_Memory_NonHeapMemoryUsage_used", "legendFormat": "Non-Heap Used", "interval": "", "exemplar": true
+      }, {
+        "expr": "java_lang_Memory_NonHeapMemoryUsage_max", "legendFormat": "Non-Heap Max", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 11,
+      "title": "Shuffle I/O",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(spark_Shuffle_ShuffleBytesWritten_Count[1m])", "legendFormat": "Written/s", "interval": "", "exemplar": true
+      }, {
+        "expr": "rate(spark_Shuffle_ShuffleBytesRead_Count[1m])", "legendFormat": "Read/s", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 12,
+      "title": "Block Manager Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_BlockManager_Memory_Value", "legendFormat": "Block Memory", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 13,
+      "title": "Storage – RDD / DataFrames",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "spark_Storage_Memory_Value", "legendFormat": "Storage Memory Used", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 14,
+      "title": "Container CPU – Stack B",
+      "type": "bargauge",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "minVizWidth": 0, "minVizHeight": 10 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "red", "value": 80 }
+          ]},
+          "custom": { "displayMode": "gradient" }
+        }, "overrides": []
+      },
+      "targets": [{
+        "expr": "topk(5, rate(container_cpu_usage_seconds_total{cpu=\"total\", name=~\".*spark.*|.*minio.*|.*jupyter.*\"}[1m]) * 100)",
+        "legendFormat": "{{name}}", "interval": "", "exemplar": true
+      }]
+    }
+  ],
+  "time": { "from": "now-1h", "to": "now" }
+}
