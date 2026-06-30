@@ -131,7 +131,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install -r requirements.txt
-      - run: apt-get update && apt-get install -y postgresql-client
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: PGPASSWORD=postgres123 psql -h localhost -U postgres -d airflow -f sql/stack_a/schema.sql
       - name: Run GX checkpoints
         working-directory: config/great_expectations
