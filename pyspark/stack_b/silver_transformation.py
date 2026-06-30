@@ -108,11 +108,13 @@ class SilverLayerTransformer:
         df_silver = df_clean \
             .withColumn("dq_is_valid",
                         when(col("price").isNull() | (col("price") <= 0), lit(False))
-                        .when(col("stock_quantity").isNull() | (col("stock_quantity") < 0), lit(False))
+                        .when(col("stock_quantity").isNull()
+                              | (col("stock_quantity") < 0), lit(False))
                         .otherwise(lit(True))) \
             .withColumn("dq_validation_errors",
                         when(col("price").isNull() | (col("price") <= 0), lit("invalid_price"))
-                        .when(col("stock_quantity").isNull() | (col("stock_quantity") < 0), lit("invalid_stock"))
+                        .when(col("stock_quantity").isNull()
+                              | (col("stock_quantity") < 0), lit("invalid_stock"))
                         .otherwise(lit(None).cast(StringType()))) \
             .withColumn("_created_at", current_timestamp()) \
             .withColumn("_updated_at", current_timestamp()) \
@@ -158,8 +160,10 @@ class SilverLayerTransformer:
                         .otherwise(lit(True))) \
             .withColumn("dq_validation_errors",
                         when(col("transaction_id").isNull(), lit("missing_transaction_id"))
-                        .when(col("quantity").isNull() | (col("quantity") <= 0), lit("invalid_quantity"))
-                        .when(col("unit_price").isNull() | (col("unit_price") <= 0), lit("invalid_unit_price"))
+                        .when(col("quantity").isNull()
+                              | (col("quantity") <= 0), lit("invalid_quantity"))
+                        .when(col("unit_price").isNull()
+                              | (col("unit_price") <= 0), lit("invalid_unit_price"))
                         .when(col("amount").isNull() | (col("amount") <= 0), lit("invalid_amount"))
                         .otherwise(lit(None).cast(StringType()))) \
             .withColumn("dq_duplicate_found", lit(False)) \

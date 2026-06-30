@@ -64,7 +64,10 @@ def check_freshness(conn) -> bool:
                 logger.warning(f"FRESHNESS: {table} has no timestamp data (new deployment)")
                 continue
             if latest < cutoff:
-                logger.error(f"FRESHNESS FAIL: {table} latest={latest} older than {FRESHNESS_HOURS}h cutoff")
+                logger.error(
+                    f"FRESHNESS FAIL: {table} latest={latest} "
+                    f"older than {FRESHNESS_HOURS}h cutoff"
+                )
                 ok = False
             else:
                 logger.info(f"FRESHNESS OK: {table} latest={latest}")

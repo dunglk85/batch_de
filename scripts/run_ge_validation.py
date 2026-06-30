@@ -10,8 +10,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 CHECKPOINT_NAME = "transactions_checkpoint"
-CRITICAL_EXPECTATIONS = {"expect_column_values_to_not_be_null", "expect_column_values_to_be_unique", "expect_column_values_to_be_in_set"}
-WARNING_EXPECTATIONS = {"expect_table_row_count_to_be_between", "expect_column_mean_to_be_between", "expect_column_values_to_be_between"}
+CRITICAL_EXPECTATIONS = {
+    "expect_column_values_to_not_be_null",
+    "expect_column_values_to_be_unique",
+    "expect_column_values_to_be_in_set",
+}
+WARNING_EXPECTATIONS = {
+    "expect_table_row_count_to_be_between",
+    "expect_column_mean_to_be_between",
+    "expect_column_values_to_be_between",
+}
 
 
 def validate_checkpoint_result(results: dict) -> int:
@@ -61,10 +69,16 @@ def validate_checkpoint_result(results: dict) -> int:
                 logger.warning(f"[INFO] {msg}")
 
     if critical_failures > 0:
-        logger.error(f"BLOCKING PIPELINE: {critical_failures} critical expectation(s) failed (total failures: {total_failures})")
+        logger.error(
+            f"BLOCKING PIPELINE: {critical_failures} critical "
+            f"expectation(s) failed (total failures: {total_failures})"
+        )
         exit_code = 1
     elif total_failures > 0:
-        logger.warning(f"Validation warnings only (no critical failures): {total_failures} non-critical failure(s)")
+        logger.warning(
+            f"Validation warnings only (no critical failures): "
+            f"{total_failures} non-critical failure(s)"
+        )
     else:
         logger.info("All expectations passed successfully")
 
@@ -79,7 +93,11 @@ def main():
         sys.exit(1)
 
     # Validate that required expectation suites exist
-    required_suites = ["silver_transactions_suite.json", "silver_customers_suite.json", "silver_products_suite.json"]
+    required_suites = [
+        "silver_transactions_suite.json",
+        "silver_customers_suite.json",
+        "silver_products_suite.json",
+    ]
     missing = []
     for suite in required_suites:
         path = os.path.join(ge_config_dir, "expectations", suite)

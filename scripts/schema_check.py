@@ -38,7 +38,10 @@ def parse_sql_schema(sql_path: str) -> dict:
         columns = {}
         for line in body.splitlines():
             line = line.strip()
-            if not line or line.upper().startswith(("PRIMARY", "FOREIGN", "INDEX", "UNIQUE", "CONSTRAINT", "CHECK", "--")):
+            if not line or line.upper().startswith(
+                ("PRIMARY", "FOREIGN", "INDEX", "UNIQUE",
+                 "CONSTRAINT", "CHECK", "--")
+            ):
                 continue
             col_match = re.match(
                 r"(\w+)\s+(\w+(?:\s*\([^)]+\))?)\s*(NOT\s+NULL)?",

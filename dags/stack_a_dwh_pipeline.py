@@ -102,7 +102,10 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
                 INSERT INTO stack_a.audit_load_history
                 (load_name, load_start_time, load_end_time, status, rows_inserted)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (f"bronze_{table_name}", kwargs['task'].start_date, datetime.now(), 'SUCCESS', len(df)))
+            """, (
+                f"bronze_{table_name}", kwargs['task'].start_date,
+                datetime.now(), 'SUCCESS', len(df),
+            ))
 
             cursor.close()
 
@@ -541,4 +544,6 @@ with dag:
         """
     )
 
-    bronze_tasks >> silver_tasks >> aggregate_to_gold >> [reconciliation, run_ge_validation] >> publish_metrics
+    bronze_tasks >> silver_tasks >> aggregate_to_gold >> [
+        reconciliation, run_ge_validation
+    ] >> publish_metrics
