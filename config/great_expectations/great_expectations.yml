@@ -6,7 +6,7 @@ datasources:
     execution_engine:
       class_name: SqlAlchemyExecutionEngine
       module_name: great_expectations.execution_engine
-      connection_string: postgresql://postgres:postgres123@${PGHOST:-postgres}:5432/airflow
+      connection_string: postgresql://postgres:postgres123@${PGHOST}:5432/airflow
     data_connectors:
       default_runtime_data_connector_name:
         name: default_runtime_data_connector_name

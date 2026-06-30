@@ -48,6 +48,7 @@ services:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
+      PGHOST: postgres
     volumes:
       - ./dags:/home/airflow/dags
       - ./data:/home/airflow/data
@@ -93,6 +94,7 @@ services:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
+      PGHOST: postgres
     volumes:
       - ./dags:/home/airflow/dags
       - ./data:/home/airflow/data
