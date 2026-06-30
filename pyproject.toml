@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dataops-pipeline"
+version = "0.1.0"
+description = "End-to-End Reliable Data Pipeline"
+requires-python = ">=3.11"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=./ --cov-report=xml --cov-report=term"
+
+[tool.coverage.run]
+source = ["dags", "pyspark", "scripts"]
+omit = ["tests/*"]
