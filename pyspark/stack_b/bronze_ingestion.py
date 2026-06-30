@@ -24,12 +24,15 @@ SOURCE_DATA_PATH = "/data/raw"
 
 def init_spark_session(app_name: str = "stack_b_bronze_ingestion") -> SparkSession:
     """Initialize Spark session with Delta Lake support"""
+    import os
+    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
     spark = SparkSession.builder \
         .appName(app_name) \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
         .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
-        .config("spark.jars.packages", "io.delta:delta-core_2.12:3.0.0") \
+        .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.0.0") \
+        .config("spark.ui.enabled", "false") \
         .getOrCreate()
     
     spark.sparkContext.setLogLevel("INFO")

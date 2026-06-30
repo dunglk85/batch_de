@@ -1,14 +1,16 @@
 """
 Stack B: Lakehouse Pipeline (PySpark + Delta Lake)
 Medallion Architecture: Bronze -> Silver -> Gold
-Orchestrated with Apache Airflow via spark-submit
+Orchestrated with Apache Airflow via PythonOperator + PySpark
 """
 
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 import logging
+import sys
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -22,18 +24,23 @@ DEFAULT_ARGS = {
     'email_on_retry': False,
 }
 
-SPARK_MASTER = "spark://spark-master:7077"
-PYSPARK_DIR = "/opt/spark-apps/stack_b"
-SPARK_SUBMIT = "/opt/spark/bin/spark-submit"
-PACKAGES = "io.delta:delta-spark_2.12:3.0.0"
-SPARK_CONF = "--conf spark.jars.ivy=/tmp/ivy"
-SPARK_MEM = "--executor-memory 1g --driver-memory 1g"
+PYSPARK_DIR = "/home/airflow/pyspark/stack_b"
+sys.path.insert(0, PYSPARK_DIR)
 
 
-def build_spark_cmd(script_name: str) -> str:
-    return (f"{SPARK_SUBMIT} --master {SPARK_MASTER} "
-            f"--packages {PACKAGES} {SPARK_CONF} {SPARK_MEM} "
-            f"{PYSPARK_DIR}/{script_name}")
+def run_bronze(**kwargs):
+    from bronze_ingestion import main
+    main()
+
+
+def run_silver(**kwargs):
+    from silver_transformation import main
+    main()
+
+
+def run_gold(**kwargs):
+    from gold_aggregation import main
+    main()
 
 
 with DAG(
@@ -47,23 +54,23 @@ with DAG(
 ) as dag:
 
     with TaskGroup(group_id="bronze_layer") as bronze:
-        bronze_ingestion = BashOperator(
+        bronze_ingestion = PythonOperator(
             task_id="bronze_ingestion",
-            bash_command=build_spark_cmd("bronze_ingestion.py"),
+            python_callable=run_bronze,
             retries=2,
         )
 
     with TaskGroup(group_id="silver_layer") as silver:
-        silver_transformation = BashOperator(
+        silver_transformation = PythonOperator(
             task_id="silver_transformation",
-            bash_command=build_spark_cmd("silver_transformation.py"),
+            python_callable=run_silver,
             retries=2,
         )
 
     with TaskGroup(group_id="gold_layer") as gold:
-        gold_aggregation = BashOperator(
+        gold_aggregation = PythonOperator(
             task_id="gold_aggregation",
-            bash_command=build_spark_cmd("gold_aggregation.py"),
+            python_callable=run_gold,
             retries=2,
         )
 

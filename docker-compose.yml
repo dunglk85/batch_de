@@ -19,7 +19,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,11 +45,13 @@ services:
       AIRFLOW__METRICS__STATSD_PORT: "9125"
       AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
       # PySpark Configuration
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
     volumes:
       - ./dags:/home/airflow/dags
       - ./data:/home/airflow/data
+      - ./data:/data
       - ./config:/home/airflow/config
       - ./pyspark:/home/airflow/pyspark
       - ./scripts:/home/airflow/scripts
@@ -62,13 +64,9 @@ services:
       statsd-exporter:
         condition: service_started
     command: >
-      bash -c "
-      airflow db init &&
-      airflow users create --username airflow --password airflow --firstname Airflow --lastname Admin --role Admin --email admin@airflow.com || true &&
-      airflow webserver
-      "
+      bash -c " airflow db init && airflow users create --username airflow --password airflow --firstname Airflow --lastname Admin --role Admin --email admin@airflow.com || true && airflow webserver "
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -92,11 +90,13 @@ services:
       AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
       AIRFLOW__METRICS__STATSD_PORT: "9125"
       AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
     volumes:
       - ./dags:/home/airflow/dags
       - ./data:/home/airflow/data
+      - ./data:/data
       - ./config:/home/airflow/config
       - ./pyspark:/home/airflow/pyspark
       - ./scripts:/home/airflow/scripts
