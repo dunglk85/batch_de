@@ -4,7 +4,7 @@
   "tags": ["dataops", "lakehouse", "stack-b", "spark", "overview"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 5,
+  "version": 6,
   "refresh": "30s",
   "panels": [
     {
@@ -177,8 +177,11 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "java_lang_Memory_HeapMemoryUsage_used",
-        "legendFormat": "{{instance}}", "interval": "", "exemplar": true
+        "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+        "legendFormat": "{{instance}} Used", "interval": "", "exemplar": true
+      }, {
+        "expr": "jvm_memory_max_bytes{area=\"heap\"}",
+        "legendFormat": "{{instance}} Max", "interval": "", "exemplar": true
       }]
     },
     {
@@ -192,69 +195,53 @@
         "defaults": { "unit": "bytes", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "java_lang_Memory_NonHeapMemoryUsage_used",
-        "legendFormat": "{{instance}}", "interval": "", "exemplar": true
+        "expr": "jvm_memory_used_bytes{area=\"nonheap\"}",
+        "legendFormat": "{{instance}} Used", "interval": "", "exemplar": true
       }]
     },
     {
       "id": 10,
-      "title": "JVM – GC Rate",
+      "title": "JVM – GC Duration",
       "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 16, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(jvm_gc_collection_seconds_sum[1m])",
+        "legendFormat": "{{instance}} {{gc}}", "interval": "", "exemplar": true
+      }]
+    },
+    {
+      "id": 11,
+      "title": "JVM – Threads",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "fieldConfig": {
         "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "rate(jvm_gc_collection_seconds_count[1m])",
-        "legendFormat": "{{instance}} {{gc}}", "interval": "", "exemplar": true
-      }]
-    },
-    {
-      "id": 11,
-      "title": "Container CPU – Stack B",
-      "type": "bargauge",
-      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "minVizWidth": 0, "minVizHeight": 10 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent", "min": 0, "max": 100,
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": null },
-            { "color": "yellow", "value": 50 },
-            { "color": "red", "value": 80 }
-          ]},
-          "custom": { "displayMode": "gradient" }
-        }, "overrides": []
-      },
-      "targets": [{
-        "expr": "topk(5, rate(container_cpu_usage_seconds_total{cpu=\"total\", id!=\"/\", id!=\"/docker\"}[1m]) * 100)",
-        "legendFormat": "{{id}}", "interval": "", "exemplar": true
+        "expr": "jvm_threads_current",
+        "legendFormat": "{{instance}}", "interval": "", "exemplar": true
       }]
     },
     {
       "id": 12,
-      "title": "Container Memory – Stack B",
-      "type": "bargauge",
+      "title": "JVM – Classes Loaded",
+      "type": "timeseries",
       "gridPos": { "h": 6, "w": 8, "x": 8, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "minVizWidth": 0, "minVizHeight": 10 },
+      "options": { "legend": { "calcs": ["min", "max", "avg"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "fieldConfig": {
-        "defaults": {
-          "unit": "bytes", "min": 0,
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": null },
-            { "color": "yellow", "value": 524288000 },
-            { "color": "red", "value": 1073741824 }
-          ]},
-          "custom": { "displayMode": "gradient" }
-        }, "overrides": []
+        "defaults": { "min": 0, "custom": { "showPoints": "auto", "spanNulls": false } }, "overrides": []
       },
       "targets": [{
-        "expr": "topk(5, container_memory_working_set_bytes{id!=\"/\", id!=\"/docker\"})",
-        "legendFormat": "{{id}}", "interval": "", "exemplar": true
+        "expr": "jvm_classes_loaded_total",
+        "legendFormat": "{{instance}}", "interval": "", "exemplar": true
       }]
     }
   ],
