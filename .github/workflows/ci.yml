@@ -305,6 +305,8 @@ jobs:
       - run: docker compose -f docker-compose.yml pull
       - run: docker compose -f docker-compose.yml up -d
       - run: sleep 30
+      - name: Deploy schema
+        run: docker compose exec -T postgres psql -U postgres -d airflow -f /docker-entrypoint-initdb.d/stack_a/schema.sql
       - name: Post-deploy validation
         run: docker compose exec -T airflow-webserver python /home/airflow/scripts/post_deploy_validation.py
 
