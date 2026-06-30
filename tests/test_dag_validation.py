@@ -23,12 +23,12 @@ def test_stack_a_dag_dependencies():
     assert dag is not None
     task_ids = {t.task_id for t in dag.tasks}
     required_tasks = [
-        "load_customers",
-        "load_products",
-        "load_transactions",
-        "transform_customers",
-        "transform_products",
-        "transform_transactions",
+        "bronze_ingestion.load_customers",
+        "bronze_ingestion.load_products",
+        "bronze_ingestion.load_transactions",
+        "silver_transformation.transform_customers",
+        "silver_transformation.transform_products",
+        "silver_transformation.transform_transactions",
         "aggregate_to_gold",
         "reconciliation_check",
         "run_data_quality_checks",
