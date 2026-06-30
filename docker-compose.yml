@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL: Airflow metadata database + Stack A (DWH)
   postgres:
@@ -201,7 +199,7 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - prometheus
+      - statsd-exporter
       - loki
     networks:
       - dataops-net
