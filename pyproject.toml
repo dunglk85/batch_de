@@ -11,6 +11,8 @@ requires-python = ">=3.11"
 [tool.black]
 line-length = 100
 target-version = ["py311"]
+extend-exclude = '''
+/(\.agent/|\.agents/|_bmad/)'''
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
