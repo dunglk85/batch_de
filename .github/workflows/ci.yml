@@ -316,23 +316,23 @@ jobs:
       - name: Post-deploy validation
         run: docker compose exec -T airflow-webserver python /home/airflow/scripts/post_deploy_validation.py
 
-  deploy-production:
-    name: Deploy production
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    needs: [deploy-staging]
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      - run: mkdir -p data/raw data/bronze data/silver data/gold
-      - run: docker compose -f docker-compose.yml up -d
-      - run: sleep 30
-      - name: Deploy schema
-        run: docker compose exec -T postgres psql -U postgres -d airflow -f /docker-entrypoint-initdb.d/stack_a/schema.sql
-      - name: Generate mock data
-        run: docker compose exec -T airflow-webserver python /home/airflow/scripts/mock_data_generator.py --records 10000 --output-dir /home/airflow/data/raw
-      - name: Run pipeline
-        run: |
-          docker compose exec -T airflow-webserver python -c "import sys; sys.path.insert(0, '/home/airflow/dags'); from stack_a_dwh_pipeline import load_csv_to_bronze, transform_bronze_to_silver, aggregate_silver_to_gold; load_csv_to_bronze('customers', '/home/airflow/data/raw/customers.csv'); load_csv_to_bronze('products', '/home/airflow/data/raw/products.csv'); load_csv_to_bronze('transactions', '/home/airflow/data/raw/transactions.csv'); transform_bronze_to_silver('customers'); transform_bronze_to_silver('products'); transform_bronze_to_silver('transactions'); aggregate_silver_to_gold(); print('Pipeline OK')"
-      - name: Post-deploy validation
-        run: docker compose exec -T airflow-webserver python /home/airflow/scripts/post_deploy_validation.py
+  # deploy-production:
+  #   name: Deploy production
+  #   if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+  #   needs: [deploy-staging]
+  #   runs-on: ubuntu-latest
+  #   environment: production
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: mkdir -p data/raw data/bronze data/silver data/gold && chmod -R 777 data
+  #     - run: docker compose -f docker-compose.yml up -d
+  #     - run: sleep 30
+  #     - name: Deploy schema
+  #       run: docker compose exec -T postgres psql -U postgres -d airflow -f /docker-entrypoint-initdb.d/stack_a/schema.sql
+  #     - name: Generate mock data
+  #       run: docker compose exec -T airflow-webserver python /home/airflow/scripts/mock_data_generator.py --records 10000 --output-dir /home/airflow/data/raw
+  #     - name: Run pipeline
+  #       run: |
+  #         docker compose exec -T airflow-webserver python -c "import sys; sys.path.insert(0, '/home/airflow/dags'); from stack_a_dwh_pipeline import load_csv_to_bronze, transform_bronze_to_silver, aggregate_silver_to_gold; load_csv_to_bronze('customers', '/home/airflow/data/raw/customers.csv'); load_csv_to_bronze('products', '/home/airflow/data/raw/products.csv'); load_csv_to_bronze('transactions', '/home/airflow/data/raw/transactions.csv'); transform_bronze_to_silver('customers'); transform_bronze_to_silver('products'); transform_bronze_to_silver('transactions'); aggregate_silver_to_gold(); print('Pipeline OK')"
+  #     - name: Post-deploy validation
+  #       run: docker compose exec -T airflow-webserver python /home/airflow/scripts/post_deploy_validation.py
