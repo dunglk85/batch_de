@@ -1,0 +1,6 @@
+FROM spark:3.5.3-scala2.12-java11-python3-ubuntu
+
+USER root
+RUN wget -q https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar -O /tmp/jmx_prometheus_javaagent.jar
+
+USER spark

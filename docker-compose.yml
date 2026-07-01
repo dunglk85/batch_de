@@ -3,6 +3,7 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: dataops-postgres
+    profiles: ["core", "stack_a"]
     command:
       - "postgres"
       - "-c"
@@ -24,12 +25,34 @@ services:
     networks:
       - dataops-net
 
+  # Airflow Database Initialization
+  airflow-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dataops-airflow-init
+    profiles: ["core"]
+    environment:
+      AIRFLOW__DATABASE__SQLALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow
+      AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-airflow}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-airflow}
+      AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@airflow.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "airflow db init && airflow users create --username $${AIRFLOW_ADMIN_USER} --password $${AIRFLOW_ADMIN_PASSWORD} --firstname Airflow --lastname Admin --role Admin --email $${AIRFLOW_ADMIN_EMAIL}"
+    networks:
+      - dataops-net
+
   # Apache Airflow: Orchestration
   airflow-webserver:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: dataops-airflow-webserver
+    profiles: ["core"]
     environment:
       AIRFLOW_HOME: /home/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
@@ -42,8 +65,7 @@ services:
       AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
       AIRFLOW__METRICS__STATSD_PORT: "9125"
       AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
-      # PySpark Configuration
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
       PGHOST: postgres
@@ -60,10 +82,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
       statsd-exporter:
         condition: service_started
-    command: >
-      bash -c " airflow db init && airflow users create --username airflow --password airflow --firstname Airflow --lastname Admin --role Admin --email admin@airflow.com || true && airflow webserver "
+    command: airflow webserver
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
@@ -78,6 +101,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dataops-airflow-scheduler
+    profiles: ["core"]
     environment:
       AIRFLOW_HOME: /home/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
@@ -89,7 +113,7 @@ services:
       AIRFLOW__METRICS__STATSD_HOST: "statsd-exporter"
       AIRFLOW__METRICS__STATSD_PORT: "9125"
       AIRFLOW__METRICS__STATSD_PREFIX: "airflow"
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
       PYSPARK_PYTHON: /usr/local/bin/python
       PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
       PGHOST: postgres
@@ -104,6 +128,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
       statsd-exporter:
         condition: service_started
     command: airflow scheduler
@@ -114,6 +140,7 @@ services:
   statsd-exporter:
     image: prom/statsd-exporter:latest
     container_name: dataops-statsd-exporter
+    profiles: ["core", "monitoring"]
     command:
       - "--statsd.mapping-config=/etc/statsd-exporter/mapping.yml"
       - "--web.listen-address=:9102"
@@ -127,14 +154,12 @@ services:
 
   # PySpark: Stack B (Lakehouse) Processing
   spark-master:
-    image: spark:3.5.3-scala2.12-java11-python3-ubuntu
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     container_name: dataops-spark-master
-    command:
-      - "bash"
-      - "-c"
-      - |
-        wget -q https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar -O /tmp/jmx_prometheus_javaagent.jar &&
-        exec /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    profiles: ["stack_b"]
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     environment:
       SPARK_DRIVER_MEMORY: 2g
       SPARK_EXECUTOR_MEMORY: 2g
@@ -156,14 +181,12 @@ services:
       - dataops-net
 
   spark-worker-1:
-    image: spark:3.5.3-scala2.12-java11-python3-ubuntu
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     container_name: dataops-spark-worker-1
-    command:
-      - "bash"
-      - "-c"
-      - |
-        wget -q https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar -O /tmp/jmx_prometheus_javaagent.jar &&
-        exec /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    profiles: ["stack_b"]
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     environment:
       SPARK_WORKER_MEMORY: 1g
       SPARK_WORKER_CORES: 2
@@ -187,6 +210,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: dataops-prometheus
+    profiles: ["monitoring"]
     volumes:
       - ./config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./config/monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml
@@ -208,6 +232,7 @@ services:
   alertmanager:
     image: prom/alertmanager:latest
     container_name: dataops-alertmanager
+    profiles: ["monitoring"]
     volumes:
       - ./config/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - ./config/monitoring/alertmanager.tmpl:/etc/alertmanager/alertmanager.tmpl
@@ -226,6 +251,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: dataops-cadvisor
+    profiles: ["monitoring"]
     command:
       - "--docker_only=true"
     ports:
@@ -234,7 +260,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-    privileged: true
     networks:
       - dataops-net
     restart: unless-stopped
@@ -243,8 +268,9 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: dataops-postgres-exporter
+    profiles: ["monitoring", "stack_a"]
     environment:
-      DATA_SOURCE_NAME: "postgresql://postgres:postgres123@postgres:5432/airflow?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/airflow?sslmode=disable"
     ports:
       - "9187:9187"
     depends_on:
@@ -256,6 +282,7 @@ services:
   loki:
     image: grafana/loki:2.9.4
     container_name: dataops-loki
+    profiles: ["monitoring"]
     ports:
       - "3100:3100"
     volumes:
@@ -269,6 +296,7 @@ services:
   promtail:
     image: grafana/promtail:2.9.4
     container_name: dataops-promtail
+    profiles: ["monitoring"]
     volumes:
       - ./config/monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
       - /var/log:/var/log:ro
@@ -284,8 +312,9 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: dataops-grafana
+    profiles: ["monitoring"]
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
       GF_INSTALL_PLUGINS: grafana-piechart-panel
     volumes:
       - ./config/monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
@@ -302,6 +331,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: dataops-minio
+    profiles: ["stack_b"]
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin123}
@@ -318,6 +348,7 @@ services:
   jupyter:
     image: jupyter/pyspark-notebook:latest
     container_name: dataops-jupyter
+    profiles: ["stack_b"]
     environment:
       JUPYTER_ENABLE_LAB: "yes"
       SPARK_MASTER: spark://spark-master:7077

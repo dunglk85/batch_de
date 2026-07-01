@@ -6,14 +6,14 @@ USER root
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
-    openjdk-17-jdk \
+    openjdk-11-jdk \
     postgresql-client \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Java home
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 USER airflow
 
