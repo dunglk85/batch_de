@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS stack_a.silver_customers (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email_masked VARCHAR(255),  -- PII: Email hashed
-    phone_masked VARCHAR(20),   -- PII: Phone hashed
+    phone_masked VARCHAR(255),   -- PII: Phone hashed
     city VARCHAR(100),
     state VARCHAR(10),
     zip_code VARCHAR(10),
