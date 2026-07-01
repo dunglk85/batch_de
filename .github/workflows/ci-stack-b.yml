@@ -8,7 +8,7 @@ on:
       - "Dockerfile.spark"
       - "requirements.txt"
       - "docker-compose.base.yml"
-      - "docker-compose.stack-b.yml"
+      - "docker-compose.dataops_stack_b.yml"
       - ".github/workflows/ci-stack-b.yml"
   pull_request:
     branches: [master]
@@ -17,7 +17,7 @@ on:
       - "Dockerfile.spark"
       - "requirements.txt"
       - "docker-compose.base.yml"
-      - "docker-compose.stack-b.yml"
+      - "docker-compose.dataops_stack_b.yml"
       - ".github/workflows/ci-stack-b.yml"
 
 env:
@@ -185,7 +185,7 @@ jobs:
           java-version: "11"
       - run: pip install -r requirements.txt
       - name: Start Stack B services
-        run: docker compose -f docker-compose.base.yml -f docker-compose.stack-b.yml --profile stack_b --profile monitoring up -d
+        run: docker compose -f docker-compose.dataops_stack_b.yml --profile stack_b --profile monitoring up -d
       - name: Wait for Spark master
         run: |
           for i in {1..20}; do

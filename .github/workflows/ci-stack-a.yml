@@ -11,7 +11,7 @@ on:
       - "Dockerfile"
       - "requirements.txt"
       - "docker-compose.base.yml"
-      - "docker-compose.stack-a.yml"
+      - "docker-compose.dataops_stack_a.yml"
       - ".github/workflows/ci-stack-a.yml"
   pull_request:
     branches: [master]
@@ -23,7 +23,7 @@ on:
       - "Dockerfile"
       - "requirements.txt"
       - "docker-compose.base.yml"
-      - "docker-compose.stack-a.yml"
+      - "docker-compose.dataops_stack_a.yml"
       - ".github/workflows/ci-stack-a.yml"
 
 env:
@@ -297,7 +297,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: mkdir -p data/raw data/bronze data/silver data/gold && sudo chown -R 50000:0 data
       - name: Start Stack A services
-        run: docker compose -f docker-compose.base.yml -f docker-compose.stack-a.yml --profile core --profile stack_a --profile monitoring up -d
+        run: docker compose -f docker-compose.dataops_stack_a.yml --profile core --profile stack_a --profile monitoring up -d
       - name: Wait for Airflow
         run: |
           for i in {1..30}; do
