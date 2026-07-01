@@ -275,13 +275,15 @@ CREATE TABLE IF NOT EXISTS stack_a.reconciliation_results (
 -- HELPER FUNCTIONS
 -- ============================================================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Function to mask PII (email)
 CREATE OR REPLACE FUNCTION mask_email(email VARCHAR) RETURNS VARCHAR AS $$
 BEGIN
     IF email IS NULL THEN
         RETURN NULL;
     END IF;
-    RETURN 'SHA256:' || encode(digest(email, 'sha256'), 'hex');
+    RETURN 'SHA256:' || encode(digest(email::bytea, 'sha256'), 'hex');
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
@@ -291,7 +293,7 @@ BEGIN
     IF phone IS NULL THEN
         RETURN NULL;
     END IF;
-    RETURN 'SHA256:' || encode(digest(phone, 'sha256'), 'hex');
+    RETURN 'SHA256:' || encode(digest(phone::bytea, 'sha256'), 'hex');
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
