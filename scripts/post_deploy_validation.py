@@ -39,7 +39,8 @@ def _ensure_psycopg2():
     try:
         import psycopg2  # noqa: F401
     except ImportError:
-        import subprocess, sys
+        import subprocess
+        import sys
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "psycopg2-binary==2.9.7", "--quiet"]
         )
