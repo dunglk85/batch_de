@@ -326,31 +326,74 @@ jobs:
           name: stack-b-test-results
           path: data/
 
-  deploy-staging:
-    name: Deploy staging
+  deploy-staging-stack-a:
+    name: Deploy staging (Stack A - DWH)
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: [integration-test-stack-a, integration-test-stack-b]
     runs-on: ubuntu-latest
     environment: staging
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose -f docker-compose.yml pull
       - run: mkdir -p data/raw data/bronze data/silver data/gold && sudo chown -R 50000:0 data
-      - run: docker-compose --profile core --profile stack_a --profile stack_b --profile monitoring up -d
-      - name: Wait for services
+      - name: Start Stack A services
+        run: docker-compose --profile core --profile stack_a --profile monitoring -f docker-compose.yml up -d
+      - name: Wait for Airflow
         run: |
           for i in {1..30}; do
-            curl -s http://localhost:8080/health && break
+            curl -sf http://localhost:8080/health && break
+            echo "Waiting for Airflow... ($i/30)"
             sleep 5
           done
       - name: Deploy schema
         run: docker compose exec -T postgres psql -U postgres -d airflow -f /docker-entrypoint-initdb.d/stack_a/schema.sql
       - name: Generate mock data
         run: docker compose exec -T airflow-webserver python /home/airflow/scripts/mock_data_generator.py --records 10000 --output-dir /home/airflow/data/raw
-      - name: Run pipeline
+      - name: Run Stack A pipeline
         run: docker compose exec -T airflow-webserver python /home/airflow/scripts/integration_run_pipeline.py
       - name: Post-deploy validation
         run: docker compose exec -T airflow-webserver python /home/airflow/scripts/post_deploy_validation.py
+
+  deploy-staging-stack-b:
+    name: Deploy staging (Stack B - Lakehouse)
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [integration-test-stack-a, integration-test-stack-b]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+      - run: pip install -r requirements.txt
+      - name: Start Stack B services
+        run: docker-compose --profile stack_b -f docker-compose.yml up -d
+      - name: Wait for Spark master
+        run: |
+          for i in {1..20}; do
+            curl -sf http://localhost:8888 && break
+            echo "Waiting for Spark master... ($i/20)"
+            sleep 5
+          done
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - name: Generate mock data
+        run: python scripts/mock_data_generator.py --records 10000 --output-dir data/raw
+      - name: Run Stack B bronze ingestion
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/bronze_ingestion.py
+      - name: Run Stack B silver transformation
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/silver_transformation.py
+      - name: Run Stack B gold aggregation
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/gold_aggregation.py
+      - name: Reconciliation check
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/common/reconciliation.py
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: stack-b-deploy-results
+          path: data/
 
   # deploy-production:
   #   name: Deploy production
