@@ -129,7 +129,6 @@ services:
     profiles: [ "monitoring", "all" ]
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
-      GF_INSTALL_PLUGINS: grafana-piechart-panel
     volumes:
       - ./config/monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
       - ./config/monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
