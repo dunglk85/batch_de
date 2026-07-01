@@ -53,7 +53,7 @@ def get_db_connection():
         import psycopg2
 
         conn = psycopg2.connect(
-            host=os.getenv("DB_HOST") or "localhost",
+            host=os.getenv("DB_HOST") or "postgres",
             database=os.getenv("DB_NAME") or "airflow",
             user=os.getenv("DB_USER") or "postgres",
             password=os.getenv("DB_PASSWORD") or "postgres123",
