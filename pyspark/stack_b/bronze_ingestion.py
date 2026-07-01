@@ -28,9 +28,6 @@ SOURCE_DATA_PATH = "/data/raw"
 
 def init_spark_session(app_name: str = "stack_b_bronze_ingestion") -> SparkSession:
     """Initialize Spark session with Delta Lake support"""
-    import os
-
-    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
     spark = (
         SparkSession.builder.appName(app_name)
         .master("spark://spark-master:7077")

@@ -32,9 +32,6 @@ GOLD = f"{DELTA_BASE}/gold"
 
 
 def init_spark_session(app_name: str = "stack_b_gold_aggregation") -> SparkSession:
-    import os
-
-    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
     spark = (
         SparkSession.builder.appName(app_name)
         .master("spark://spark-master:7077")

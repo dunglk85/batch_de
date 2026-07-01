@@ -1,7 +1,8 @@
 import sys
+import os
 import logging
 
-sys.path.insert(0, "/home/airflow/dags")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "dags"))
 from stack_a_dwh_pipeline import (  # noqa: E402
     load_csv_to_bronze,
     transform_bronze_to_silver,
