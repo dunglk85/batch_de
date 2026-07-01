@@ -37,7 +37,10 @@ CRITICAL_NULL_COLUMNS = [
 
 def get_db_connection():
     try:
-        import psycopg2
+        try:
+            import psycopg2
+        except ImportError:
+            import psycopg2_binary as psycopg2
 
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST", "postgres"),
