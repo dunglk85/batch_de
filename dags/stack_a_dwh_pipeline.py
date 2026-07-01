@@ -98,6 +98,11 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
 
             logger.info(f"Successfully loaded {len(df)} rows to bronze_{table_name}")
 
+            start_time = (
+                kwargs["task"].start_date
+                if "task" in kwargs else datetime.now()
+            )
+
             cursor.execute(
                 """
                 INSERT INTO stack_a.audit_load_history
@@ -106,7 +111,7 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
             """,
                 (
                     f"bronze_{table_name}",
-                    kwargs["task"].start_date,
+                    start_time,
                     datetime.now(),
                     "SUCCESS",
                     len(df),
