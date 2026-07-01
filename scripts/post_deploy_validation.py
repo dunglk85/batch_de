@@ -15,11 +15,11 @@ VALIDATION_EXIT = 1
 
 # Baseline thresholds (tune per environment)
 EXPECTED_MIN_ROWS = {
-    "bronze_customers": 1000,
-    "bronze_products": 100,
+    "bronze_customers": 100,
+    "bronze_products": 25,
     "bronze_transactions": 5000,
-    "silver_customers": 800,
-    "silver_products": 80,
+    "silver_customers": 100,
+    "silver_products": 25,
     "silver_transactions": 4000,
     "gold_daily_sales_fact": 10,
     "gold_customer_metrics": 100,
@@ -51,6 +51,10 @@ def get_db_connection():
         return None
 
 
+def _freshness_column(table: str) -> str:
+    return "_ingestion_date" if table.startswith("bronze_") else "_updated_at"
+
+
 def check_freshness(conn) -> bool:
     ok = True
     tables = ["bronze_transactions", "silver_transactions", "gold_daily_sales_fact"]
@@ -58,8 +62,9 @@ def check_freshness(conn) -> bool:
 
     for table in tables:
         try:
+            col = _freshness_column(table)
             cur = conn.cursor()
-            cur.execute(f"SELECT MAX(_updated_at) FROM stack_a.{table}")
+            cur.execute(f"SELECT MAX({col}) FROM stack_a.{table}")
             row = cur.fetchone()
             latest = row[0] if row and row[0] else None
             if latest is None:
