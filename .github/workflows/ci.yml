@@ -325,6 +325,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose -f docker-compose.yml up -d
+      - name: Install dependencies
+        run: pip install psycopg2-binary==2.9.7
       - name: Post-deploy validation
         run: python scripts/post_deploy_validation.py
         env:
