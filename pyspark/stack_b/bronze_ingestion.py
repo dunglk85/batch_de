@@ -18,19 +18,20 @@ from pyspark.sql.functions import col, current_timestamp, md5, concat_ws, lit, r
 from datetime import datetime
 from typing import Any
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
-DELTA_LOCATION_BASE = "s3a://delta-lake"
+DELTA_LOCATION_BASE = os.getenv("DELTA_LOCATION_BASE", "s3a://delta-lake")
 BRONZE_LOCATION = f"{DELTA_LOCATION_BASE}/bronze"
-SOURCE_DATA_PATH = "/data/raw"
+SOURCE_DATA_PATH = os.getenv("SOURCE_DATA_PATH", "/data/raw")
 
 
 def init_spark_session(app_name: str = "stack_b_bronze_ingestion") -> SparkSession:
     """Initialize Spark session with Delta Lake support"""
     spark = (
         SparkSession.builder.appName(app_name)
-        .master("spark://spark-master:7077")
+        .master(os.getenv("SPARK_MASTER", "spark://spark-master:7077"))
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"

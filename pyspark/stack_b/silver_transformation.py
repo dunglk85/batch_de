@@ -9,10 +9,11 @@ from pyspark.sql.functions import col, current_timestamp, lit, when, sha2, row_n
 from pyspark.sql.window import Window
 from datetime import datetime
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
-DELTA_LOCATION_BASE = "s3a://delta-lake"
+DELTA_LOCATION_BASE = os.getenv("DELTA_LOCATION_BASE", "s3a://delta-lake")
 BRONZE_LOCATION = f"{DELTA_LOCATION_BASE}/bronze"
 SILVER_LOCATION = f"{DELTA_LOCATION_BASE}/silver"
 
@@ -20,7 +21,7 @@ SILVER_LOCATION = f"{DELTA_LOCATION_BASE}/silver"
 def init_spark_session(app_name: str = "stack_b_silver_transformation") -> SparkSession:
     spark = (
         SparkSession.builder.appName(app_name)
-        .master("spark://spark-master:7077")
+        .master(os.getenv("SPARK_MASTER", "spark://spark-master:7077"))
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"

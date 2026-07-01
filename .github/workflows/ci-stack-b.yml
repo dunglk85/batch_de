@@ -144,24 +144,29 @@ jobs:
           key: ${{ runner.os }}-pip-test-${{ hashFiles('requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-test-
       - run: pip install -r requirements.txt
-      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - run: mkdir -p data/raw data/delta data/bronze data/silver data/gold
       - run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
       - name: Run Stack B bronze ingestion
         run: python pyspark/stack_b/bronze_ingestion.py
         env:
           SPARK_MASTER: local[*]
+          SOURCE_DATA_PATH: data/raw
+          DELTA_LOCATION_BASE: data/delta
       - name: Run Stack B silver transformation
         run: python pyspark/stack_b/silver_transformation.py
         env:
           SPARK_MASTER: local[*]
+          DELTA_LOCATION_BASE: data/delta
       - name: Run Stack B gold aggregation
         run: python pyspark/stack_b/gold_aggregation.py
         env:
           SPARK_MASTER: local[*]
+          DELTA_LOCATION_BASE: data/delta
       - name: Reconciliation check
         run: python pyspark/common/reconciliation.py
         env:
           SPARK_MASTER: local[*]
+          DELTA_LOCATION_BASE: data/delta
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

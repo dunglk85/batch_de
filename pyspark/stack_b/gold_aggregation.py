@@ -22,10 +22,11 @@ from pyspark.sql.functions import (
 from pyspark.sql.window import Window
 from datetime import datetime
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
-DELTA_BASE = "s3a://delta-lake"
+DELTA_BASE = os.getenv("DELTA_LOCATION_BASE", "s3a://delta-lake")
 BRONZE = f"{DELTA_BASE}/bronze"
 SILVER = f"{DELTA_BASE}/silver"
 GOLD = f"{DELTA_BASE}/gold"
@@ -34,7 +35,7 @@ GOLD = f"{DELTA_BASE}/gold"
 def init_spark_session(app_name: str = "stack_b_gold_aggregation") -> SparkSession:
     spark = (
         SparkSession.builder.appName(app_name)
-        .master("spark://spark-master:7077")
+        .master(os.getenv("SPARK_MASTER", "spark://spark-master:7077"))
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"
