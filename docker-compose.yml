@@ -1,7 +1,7 @@
 # Convenience wrapper: runs all stacks together.
 # For individual stacks, use:
 #   docker compose -f docker-compose.base.yml -f docker-compose.stack-a.yml --profile core --profile stack_a up -d
-#   docker compose -f docker-compose.base.yml -f docker-compose.stack-b.yml --profile stack_b up -d
+#   docker compose -f docker-compose.base.yml -f docker-compose.stack-b.yml --profile stack_b --profile monitoring up -d
 
 include:
   - docker-compose.base.yml

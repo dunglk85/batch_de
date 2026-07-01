@@ -96,7 +96,7 @@ services:
     restart: unless-stopped
 
   loki:
-    image: grafana/loki:2.9.4
+    image: grafana/loki:3.4.2
     container_name: dataops-loki
     profiles: [ "monitoring", "all" ]
     ports:
@@ -109,7 +109,7 @@ services:
       - dataops-net
 
   promtail:
-    image: grafana/promtail:2.9.4
+    image: grafana/promtail:3.4.2
     container_name: dataops-promtail
     profiles: [ "monitoring", "all" ]
     volumes:
