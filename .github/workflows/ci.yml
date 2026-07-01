@@ -213,8 +213,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  integration-test:
-    name: Integration test
+  integration-test-stack-a:
+    name: Integration test (Stack A - DWH)
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: [build]
     runs-on: ubuntu-latest
@@ -240,7 +240,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "11"
       - run: pip install -r requirements.txt
       - run: mkdir -p data/raw data/bronze data/silver data/gold
       - name: Deploy schema
@@ -250,19 +250,7 @@ jobs:
           PGHOST: localhost
       - run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
       - name: Run Stack A end-to-end
-        run: |
-          python -c "
-          import sys; sys.path.insert(0, 'dags')
-          from stack_a_dwh_pipeline import load_csv_to_bronze, transform_bronze_to_silver, aggregate_silver_to_gold
-          load_csv_to_bronze('customers', 'data/raw/customers.csv')
-          load_csv_to_bronze('products', 'data/raw/products.csv')
-          load_csv_to_bronze('transactions', 'data/raw/transactions.csv')
-          transform_bronze_to_silver('customers')
-          transform_bronze_to_silver('products')
-          transform_bronze_to_silver('transactions')
-          aggregate_silver_to_gold()
-          print('Stack A end-to-end OK')
-          " 2>&1 | tail -5
+        run: python scripts/integration_run_pipeline.py
         env:
           DB_HOST: localhost
           DB_NAME: airflow
@@ -288,23 +276,67 @@ jobs:
                   if not res.get('success', True) and res.get('expectation_config', {}).get('expectation_type', '') in critical:
                       critical_failures += 1
           if critical_failures > 0:
-              raise AssertionError(f'Integration GX check: {critical_failures} critical failure(s) (total: {total_failures})')
+              raise AssertionError(f'Stack A GX check: {critical_failures} critical failure(s) (total: {total_failures})')
           elif total_failures > 0:
-              print(f'Integration GX check: {total_failures} non-critical warning(s) ignored')
-          print('Integration GX validation PASSED')
+              print(f'Stack A GX check: {total_failures} non-critical warning(s) ignored')
+          print('Stack A GX validation PASSED')
           "
+
+  integration-test-stack-b:
+    name: Integration test (Stack B - Lakehouse)
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-test-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-test-
+      - run: pip install -r requirements.txt
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
+      - name: Run Stack B bronze ingestion
+        run: python pyspark/stack_b/bronze_ingestion.py
+        env:
+          SPARK_MASTER: local[*]
+      - name: Run Stack B silver transformation
+        run: python pyspark/stack_b/silver_transformation.py
+        env:
+          SPARK_MASTER: local[*]
+      - name: Run Stack B gold aggregation
+        run: python pyspark/stack_b/gold_aggregation.py
+        env:
+          SPARK_MASTER: local[*]
+      - name: Reconciliation check
+        run: python pyspark/common/reconciliation.py
+        env:
+          SPARK_MASTER: local[*]
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: stack-b-test-results
+          path: data/
 
   deploy-staging:
     name: Deploy staging
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    needs: [integration-test]
+    needs: [integration-test-stack-a, integration-test-stack-b]
     runs-on: ubuntu-latest
     environment: staging
     steps:
       - uses: actions/checkout@v4
       - run: docker compose -f docker-compose.yml pull
       - run: mkdir -p data/raw data/bronze data/silver data/gold && sudo chown -R 50000:0 data
-      - run: docker compose --profile all -f docker-compose.yml up -d
+      - run: docker-compose --profile core --profile stack_a --profile stack_b --profile monitoring up -d
       - name: Wait for services
         run: |
           for i in {1..30}; do
