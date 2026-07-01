@@ -35,12 +35,20 @@ CRITICAL_NULL_COLUMNS = [
 ]
 
 
+def _ensure_psycopg2():
+    try:
+        import psycopg2  # noqa: F401
+    except ImportError:
+        import subprocess, sys
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "psycopg2-binary==2.9.7", "--quiet"]
+        )
+
+
 def get_db_connection():
     try:
-        try:
-            import psycopg2
-        except ImportError:
-            import psycopg2_binary as psycopg2
+        _ensure_psycopg2()
+        import psycopg2
 
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST", "postgres"),
