@@ -95,8 +95,7 @@ deploy-staging:
   services:
     - docker:dind
   script:
-    - docker compose -f docker-compose.yml pull
-    - docker compose -f docker-compose.yml up -d
+    - docker compose -f docker-compose.base.yml -f docker-compose.stack-a.yml --profile core --profile stack_a --profile monitoring up -d
     - sleep 30
     - python scripts/post_deploy_validation.py
   environment:
@@ -110,7 +109,7 @@ deploy-production:
   services:
     - docker:dind
   script:
-    - docker compose -f docker-compose.yml up -d
+    - docker compose -f docker-compose.base.yml -f docker-compose.stack-a.yml --profile core --profile stack_a --profile monitoring up -d
     - python scripts/post_deploy_validation.py
     - echo "Production deployment complete"
   environment:

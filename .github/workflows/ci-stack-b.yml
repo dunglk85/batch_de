@@ -1,0 +1,211 @@
+name: CI - Stack B (Lakehouse)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "pyspark/**"
+      - "Dockerfile.spark"
+      - "requirements.txt"
+      - "docker-compose.base.yml"
+      - "docker-compose.stack-b.yml"
+      - ".github/workflows/ci-stack-b.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "pyspark/**"
+      - "Dockerfile.spark"
+      - "requirements.txt"
+      - "docker-compose.base.yml"
+      - "docker-compose.stack-b.yml"
+      - ".github/workflows/ci-stack-b.yml"
+
+env:
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-lint-
+      - run: pip install flake8 black
+      - run: flake8 pyspark/
+      - run: black --check pyspark/
+
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-typecheck-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-typecheck-
+      - run: pip install mypy -r requirements.txt
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - run: mypy pyspark/
+
+  test:
+    name: Unit tests
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-test-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-test-
+      - run: pip install -r requirements.txt
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - run: pytest tests/unit/test_pii_masking.py --cov=pyspark --cov-report=xml --cov-report=term
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: stack-b-test-results
+          path: reports/
+
+  build:
+    name: Docker build (Spark image)
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-spark
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=,suffix=,format=short
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.spark
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=stack-b
+          cache-to: type=gha,scope=stack-b,mode=max
+
+  integration-test:
+    name: Integration test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-test-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-test-
+      - run: pip install -r requirements.txt
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - run: python scripts/mock_data_generator.py --records 50000 --output-dir data/raw
+      - name: Run Stack B bronze ingestion
+        run: python pyspark/stack_b/bronze_ingestion.py
+        env:
+          SPARK_MASTER: local[*]
+      - name: Run Stack B silver transformation
+        run: python pyspark/stack_b/silver_transformation.py
+        env:
+          SPARK_MASTER: local[*]
+      - name: Run Stack B gold aggregation
+        run: python pyspark/stack_b/gold_aggregation.py
+        env:
+          SPARK_MASTER: local[*]
+      - name: Reconciliation check
+        run: python pyspark/common/reconciliation.py
+        env:
+          SPARK_MASTER: local[*]
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: stack-b-integration-results
+          path: data/
+
+  deploy-staging:
+    name: Deploy staging
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: [integration-test]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+      - run: pip install -r requirements.txt
+      - name: Start Stack B services
+        run: docker compose -f docker-compose.base.yml -f docker-compose.stack-b.yml --profile stack_b up -d
+      - name: Wait for Spark master
+        run: |
+          for i in {1..20}; do
+            curl -sf http://localhost:8888 && break
+            echo "Waiting for Spark master... ($i/20)"
+            sleep 5
+          done
+      - run: mkdir -p data/raw data/bronze data/silver data/gold
+      - name: Generate mock data
+        run: python scripts/mock_data_generator.py --records 10000 --output-dir data/raw
+      - name: Run Stack B bronze ingestion
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/bronze_ingestion.py
+      - name: Run Stack B silver transformation
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/silver_transformation.py
+      - name: Run Stack B gold aggregation
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/gold_aggregation.py
+      - name: Reconciliation check
+        run: docker compose exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/common/reconciliation.py
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: stack-b-deploy-results
+          path: data/

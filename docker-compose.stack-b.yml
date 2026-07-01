@@ -1,0 +1,87 @@
+services:
+  spark-master:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    container_name: dataops-spark-master
+    profiles: ["stack_b", "all"]
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_DRIVER_MEMORY: 2g
+      SPARK_EXECUTOR_MEMORY: 2g
+      SPARK_CONF_DIR: /opt/spark/conf
+      SPARK_DAEMON_JAVA_OPTS: "-javaagent:/tmp/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter/rules.yml"
+    volumes:
+      - ./pyspark:/opt/spark-apps
+      - ./data:/data
+      - ./config/spark/metrics.properties:/opt/spark/conf/metrics.properties
+      - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./config/monitoring/jmx-exporter-rules.yml:/opt/jmx-exporter/rules.yml
+      - spark-data:/opt/spark/data
+    ports:
+      - "8888:8080"
+      - "7077:7077"
+      - "4040:4040"
+      - "9404:9404"
+    networks:
+      - dataops-net
+
+  spark-worker-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    container_name: dataops-spark-worker-1
+    profiles: ["stack_b", "all"]
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_WORKER_MEMORY: 1g
+      SPARK_WORKER_CORES: 2
+      SPARK_CONF_DIR: /opt/spark/conf
+      SPARK_DAEMON_JAVA_OPTS: "-javaagent:/tmp/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter/rules.yml"
+    volumes:
+      - ./pyspark:/opt/spark-apps
+      - ./data:/data
+      - ./config/spark/metrics.properties:/opt/spark/conf/metrics.properties
+      - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./config/monitoring/jmx-exporter-rules.yml:/opt/jmx-exporter/rules.yml
+    ports:
+      - "8081:8081"
+      - "9405:9404"
+    depends_on:
+      - spark-master
+    networks:
+      - dataops-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: dataops-minio
+    profiles: ["stack_b", "all"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin123}
+    command: minio server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - dataops-net
+
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: dataops-jupyter
+    profiles: ["stack_b", "all"]
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      SPARK_MASTER: spark://spark-master:7077
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/data
+      - ./pyspark:/pyspark
+    ports:
+      - "8889:8888"
+    depends_on:
+      - spark-master
+    networks:
+      - dataops-net
