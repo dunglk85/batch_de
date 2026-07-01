@@ -98,10 +98,7 @@ def load_csv_to_bronze(table_name: str, csv_path: str, **kwargs):
 
             logger.info(f"Successfully loaded {len(df)} rows to bronze_{table_name}")
 
-            start_time = (
-                kwargs["task"].start_date
-                if "task" in kwargs else datetime.now()
-            )
+            start_time = kwargs["task"].start_date if "task" in kwargs else datetime.now()
 
             cursor.execute(
                 """
