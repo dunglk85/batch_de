@@ -15,7 +15,10 @@ def init_spark() -> SparkSession:
         SparkSession.builder.appName("reconciliation")
         .master(os.getenv("SPARK_MASTER", "spark://spark-master:7077"))
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+        )
         .config("spark.ui.enabled", "false")
         .getOrCreate()
     )
