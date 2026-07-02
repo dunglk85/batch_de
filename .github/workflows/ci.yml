@@ -486,13 +486,13 @@ jobs:
       - name: Generate mock data
         run: python scripts/mock_data_generator.py --records 10000 --output-dir data/raw
       - name: Run Stack B bronze ingestion
-        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/bronze_ingestion.py
+        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T -e SPARK_MASTER=local[*] spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/bronze_ingestion.py
       - name: Run Stack B silver transformation
-        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/silver_transformation.py
+        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T -e SPARK_MASTER=local[*] spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/silver_transformation.py
       - name: Run Stack B gold aggregation
-        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/gold_aggregation.py
+        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T -e SPARK_MASTER=local[*] spark-master /opt/spark/bin/spark-submit /opt/spark-apps/stack_b/gold_aggregation.py
       - name: Reconciliation check
-        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T spark-master /opt/spark/bin/spark-submit /opt/spark-apps/common/reconciliation.py
+        run: docker compose -f docker-compose.dataops_stack_b.yml exec -T -e SPARK_MASTER=local[*] spark-master /opt/spark/bin/spark-submit /opt/spark-apps/common/reconciliation.py
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
