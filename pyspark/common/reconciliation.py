@@ -19,6 +19,11 @@ def init_spark() -> SparkSession:
             "spark.sql.catalog.spark_catalog",
             "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         )
+        .config(
+            "spark.jars.packages",
+            "io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4,"
+            "com.amazonaws:aws-java-sdk-bundle:1.12.262",
+        )
         .config("spark.ui.enabled", "false")
         .getOrCreate()
     )
