@@ -3,4 +3,19 @@ FROM spark:3.5.3-scala2.12-java11-python3-ubuntu
 USER root
 RUN wget -q https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar -O /tmp/jmx_prometheus_javaagent.jar
 
+RUN set -eux; \
+    DEPS=" \
+      io.delta:delta-spark_2.12:3.0.0 \
+      io.delta:delta-storage:3.0.0 \
+      org.apache.hadoop:hadoop-aws:3.3.4 \
+      com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+    "; \
+    for dep in $DEPS; do \
+      groupId=$(echo $dep | cut -d: -f1 | tr '.' '/'); \
+      artifactId=$(echo $dep | cut -d: -f2); \
+      version=$(echo $dep | cut -d: -f3); \
+      url="https://repo1.maven.org/maven2/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"; \
+      wget -q "$url" -O "/opt/spark/jars/${artifactId}-${version}.jar"; \
+    done
+
 USER spark
